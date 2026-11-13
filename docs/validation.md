@@ -7,7 +7,7 @@ run and both review checklists are recorded in the dated section at the end.
 
 `python scripts/validate_local.py` passed on an isolated PostgreSQL **17.11**
 container using only invented dummy records. Migration file:
-`20261113095327_private_ids_schema.sql`. No hosted migration was applied.
+`20261113125204_private_ids_schema.sql`. No hosted migration was applied.
 
 | Check | Result |
 |---|---|
@@ -71,8 +71,8 @@ or PR merge was performed. Schema-only work does not authorize a later loader.
 
 Both local migrations passed together:
 
-- `20261113095327_private_ids_schema.sql` (original, unchanged)
-- `20261113111942_review_integrity_and_privacy_fixes.sql` (additive review fixes)
+- `20261113125204_private_ids_schema.sql` (original, unchanged)
+- `20261113125216_review_integrity_and_privacy_fixes.sql` (additive review fixes)
 
 `python scripts/validate_local.py` runs the original contract, the review
 regressions, a committed Staff/Reference bootstrap transaction and real concurrent

@@ -182,7 +182,7 @@ Review sources:
   public event-trigger function's execution permissions.
 
 The original migration is unchanged. Additive migration
-`20261113111942_review_integrity_and_privacy_fixes.sql` contains the fixes:
+`20261113125216_review_integrity_and_privacy_fixes.sql` contains the fixes:
 
 | Finding | Fix / retained limitation |
 |---|---|
@@ -253,3 +253,31 @@ model/catalog/ER agreement, three real concurrent races and two isolation
 rejection cases all passed on PostgreSQL 17.11. See validation.md for coverage
 and limitations. The four empty source tabs and all original business-definition
 open questions above remain unchanged; they were not review findings to infer away.
+
+
+## 2026-11-13 — Approved hosted application via worker
+
+The user explicitly authorized both migrations from PR #1 head
+`decd704109cc30fdd443a38d2af8880b23e8f03a` on the allowed project
+`uzofrrrtwqjmtytrbqfr` only. Applied in timestamp order through the worker's
+standard Management API migration endpoint. No seed or source data was loaded;
+no access policies were added and no merge was performed. This application
+supersedes the earlier unapplied-state observations, which remain dated history.
+
+The endpoint assigned versions different from the original file timestamps.
+Renamed with `git mv`, with SQL bytes verified identical to the approved head:
+
+| Original filename | Recorded-version filename |
+|---|---|
+| `20261113095327_private_ids_schema.sql` | `20261113125204_private_ids_schema.sql` |
+| `20261113111942_review_integrity_and_privacy_fixes.sql` | `20261113125216_review_integrity_and_privacy_fixes.sql` |
+
+Hosted verification: both recorded versions exist; ids has 24 tables and
+ids_import has four; all 28 have RLS and zero policies. No table/view/sequence/
+function ACL grants to PUBLIC, anon, authenticated or service_role exist in
+these schemas. Both fee views have security_invoker=true. EXECUTE on
+public.rls_auto_enable() is revoked from PUBLIC, anon and authenticated.
+Data API exposed schemas remain public,graphql_public. Security advisor:
+28 INFO rls_enabled_no_policy findings, expected for the approved closed
+access model; zero WARN or ERROR findings. The two prior function warnings
+are absent. No automatic remediation or access-model changes were made.
