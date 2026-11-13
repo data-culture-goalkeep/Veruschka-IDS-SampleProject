@@ -6,6 +6,9 @@ explicit Approval, a fixed snapshot and a failure sink after separate approval.
 """
 from __future__ import annotations
 import argparse
+from contextlib import contextmanager
+import fcntl
+from types import MappingProxyType
 from dataclasses import dataclass
 from datetime import datetime, timedelta, time
 from decimal import Decimal, InvalidOperation
@@ -32,7 +35,8 @@ TABS = {t['tab']: t for t in AUDIT['tabs']}
 CODES = {'SCOPE_MISMATCH', 'NOT_APPROVED', 'HEADER_CHANGED', 'ROW_INVALID',
          'FORMULA_FOUND', 'TYPE_INVALID', 'REQUIRED_VALUE', 'SOURCE_CHANGED',
          'PAYLOAD_TOO_LARGE', 'WRITE_FAILED_OR_UNCERTAIN', 'RECEIPT_INVALID',
-         'PREFLIGHT_FAILED', 'FAILURE_LOG_FAILED', 'SNAPSHOT_INCOMPLETE'}
+         'PREFLIGHT_FAILED', 'FAILURE_LOG_FAILED', 'SNAPSHOT_INCOMPLETE',
+         'RECONCILIATION_REQUIRED', 'RUN_LOCKED', 'ATTEMPT_CONFLICT'}
 
 class StopLoad(Exception):
     """Only allowlisted codes cross logging boundaries; never provider DETAILS."""
@@ -40,8 +44,22 @@ class StopLoad(Exception):
         self.code = code if code in CODES else 'WRITE_FAILED_OR_UNCERTAIN'
         super().__init__(self.code)
 
+def freeze(value):
+    if isinstance(value, dict): return MappingProxyType({k:freeze(v) for k,v in value.items()})
+    if isinstance(value, list): return tuple(freeze(v) for v in value)
+    return value
+
+def thaw(value):
+    if isinstance(value, (dict, MappingProxyType)): return {k:thaw(v) for k,v in value.items()}
+    if isinstance(value, (tuple, list)): return [thaw(v) for v in value]
+    return value
+
+def private_snapshot(value):
+    # Copy through JSON, then recursively freeze: no caller-owned mutable objects.
+    return freeze(json.loads(canonical(value)))
+
 def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)
+    return json.dumps(thaw(value), sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)
 
 def sha(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
@@ -229,32 +247,82 @@ def chunks_for(rows):
     return chunks
 
 class Journal:
-    """Private durable stop marker. Uncertainty requires separate operator reconciliation.
+    """Durable run state on an operator-provisioned persistent filesystem.
 
-    Never clear an uncertain marker automatically. Keep this path with the approved
-    run between process restarts; losing it invalidates permission to resume.
+    No automatic initialization: a missing/untrusted journal always requires the
+    explicit read-only Loader.reconcile operation, even for first execution.
+    All processes for a run must share this path; lock survives atomic replaces.
     """
     def __init__(self, path):
-        self.path = Path(path)
-        if self.path.parent.name != 'work': raise StopLoad('SCOPE_MISMATCH')
+        self.path = Path(path).resolve()
+        if not Path(path).is_absolute() or self.path.is_relative_to(ROOT):
+            raise StopLoad('SCOPE_MISMATCH')
+        try: self.run_id = str(uuid.UUID(self.path.stem))
+        except ValueError: raise StopLoad('SCOPE_MISMATCH') from None
+        if self.path.name != self.run_id+'.json': raise StopLoad('SCOPE_MISMATCH')
+        self.marker = self.path.with_suffix('.started')
+        self.lock_path = self.path.with_suffix('.lock')
+        self._fd = None
+
+    @contextmanager
+    def exclusive(self):
+        if self._fd is not None: raise StopLoad('RUN_LOCKED')
+        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        fd = os.open(self.lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        try:
+            try: fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError: raise StopLoad('RUN_LOCKED') from None
+            self._fd = fd
+            yield
+        finally:
+            if self._fd == fd: self._fd = None
+            os.close(fd)
+
+    def _read(self, path):
+        try:
+            with path.open() as f: return json.load(f)
+        except Exception: raise StopLoad('RECONCILIATION_REQUIRED') from None
 
     def read(self):
-        if not self.path.exists(): return None
-        try: return json.loads(self.path.read_text())
-        except Exception: raise StopLoad('WRITE_FAILED_OR_UNCERTAIN') from None
+        if self._fd is None: raise StopLoad('RUN_LOCKED')
+        state = self._read(self.path); marker = self._read(self.marker)
+        expected = {k:state.get(k) for k in ('run','snapshot','generation')}
+        if marker != expected or state.get('state') not in ('ready','in_flight'):
+            raise StopLoad('RECONCILIATION_REQUIRED')
+        return state
 
-    def write(self, value):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        fd, temp = tempfile.mkstemp(dir=self.path.parent)
+    def _atomic(self, path, value):
+        if self._fd is None: raise StopLoad('RUN_LOCKED')
+        fd, temp = tempfile.mkstemp(dir=path.parent)
         try:
             with os.fdopen(fd, 'w') as f:
                 f.write(canonical(value)); f.flush(); os.fsync(f.fileno())
-            os.replace(temp, self.path)
-            dirfd = os.open(self.path.parent, os.O_RDONLY)
+            os.replace(temp, path)
+            dirfd = os.open(path.parent, os.O_RDONLY)
             try: os.fsync(dirfd)
             finally: os.close(dirfd)
         finally:
             if os.path.exists(temp): os.unlink(temp)
+
+    def reconciled(self, approval, mode):
+        generation = str(uuid.uuid4())
+        base = {'run':approval.run_id,'snapshot':approval.snapshot_hash,'generation':generation}
+        # A crash between the two fsync'd replaces leaves mismatched state: stop.
+        self._atomic(self.marker, base)
+        self._atomic(self.path, dict(base,state='ready',attempt=None,mode=mode))
+
+    def begin(self, approval, attempt, receipt):
+        state = self.read()
+        if state.get('run') != approval.run_id or state.get('snapshot') != approval.snapshot_hash or state['state'] != 'ready':
+            raise StopLoad('RECONCILIATION_REQUIRED')
+        self._atomic(self.path, dict(state,state='in_flight',attempt=attempt,receipt=receipt))
+
+    def complete(self, attempt):
+        state = self.read()
+        if state['state'] != 'in_flight' or state.get('attempt') != attempt:
+            raise StopLoad('ATTEMPT_CONFLICT')
+        state.pop('receipt', None)
+        self._atomic(self.path, dict(state,state='ready'))
 
 class Loader:
     def __init__(self, approval, worker, failure_sink, journal):
@@ -264,10 +332,11 @@ class Loader:
 
     def _send(self, sql, receipt):
         if len(canonical({'query': sql}).encode()) > MAX_BYTES: raise StopLoad('PAYLOAD_TOO_LARGE')
-        self.journal.write({'run':self.approval.run_id,'snapshot':self.approval.snapshot_hash,'state':'in_flight','receipt':receipt})
+        attempt = str(uuid.uuid4())
+        self.journal.begin(self.approval, attempt, receipt)
         response = self.worker.query(sql)
         if response != [{'receipt': receipt}]: raise StopLoad('RECEIPT_INVALID')
-        self.journal.write({'run':self.approval.run_id,'snapshot':self.approval.snapshot_hash,'state':'ready'})
+        self.journal.complete(attempt)
 
     def _run_guard(self, create=False):
         a = self.approval
@@ -280,7 +349,7 @@ class Loader:
         sql += (f"IF NOT EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid} AND project_ref={literal(PROJECT)} AND source_file_id={literal(SOURCE)} AND approved_scope={scope_sql} AND source_timezone='Asia/Kolkata' AND source_manifest={json_sql({'snapshot_hash':a.snapshot_hash})} AND status IN ('running','completed')) THEN RAISE EXCEPTION 'RUN_CONFLICT'; END IF;\n")
         return sql
 
-    def _chunk_sql(self, rows):
+    def _chunk_sql(self, rows, read_only=False):
         a = self.approval; first = rows[0]; last = rows[-1]
         table = TABLES[first['tab']]; target = 'ids.' + ident(table['name'])
         pk = next(f['name'] for f in table['fields'] if f['primary_key'])
@@ -323,43 +392,105 @@ FOR r IN SELECT value FROM jsonb_array_elements(p) LOOP
 END LOOP;
 END;
 """
+        if read_only:
+            branch = sql.index('\nELSE\n')
+            end = sql.index('\nEND IF;\nIF (SELECT count(*)', branch)
+            checks = sql[end + len('\nEND IF;'):sql.rfind('\nEND;')]
+            sql = (sql[:branch] + checks + '\nELSE\n' +
+                   f"IF EXISTS(SELECT 1 FROM ids_import.source_row WHERE import_run_id={rid} AND source_sheet_id={sheet} AND original_row BETWEEN {lo} AND {hi}) THEN RAISE EXCEPTION 'ORPHAN_LINEAGE'; END IF;\nEND IF;\nEND;\n")
         return sql, {'chunk': cid, 'sha256': digest, 'rows': len(rows)}
 
+    def _compile(self, rows):
+        chunks = chunks_for(rows)
+        groups = []
+        bootstrap = [c for c in chunks if c[0]['tab'] in ('24.Reference List', '23.Staff')]
+        if bootstrap: groups.append(bootstrap)
+        groups += [[c] for c in chunks if c[0]['tab'] not in ('24.Reference List','23.Staff')]
+        # Compile and size-check every transaction before the first write.
+        compiled = []
+        pending = list(groups)
+        while pending:
+            group = pending.pop(0)
+            body = self._run_guard(create=True); receipts = []
+            for chunk in group:
+                text, receipt = self._chunk_sql(chunk); body += text; receipts.append(receipt)
+            receipt = {'run': self.approval.run_id, 'chunks': receipts}
+            sql = transaction(body, receipt)
+            if len(canonical({'query': sql}).encode()) > MAX_BYTES:
+                if len(group) != 1 or len(group[0]) < 2: raise StopLoad('PAYLOAD_TOO_LARGE')
+                chunk = group[0]
+                if chunk[0]['tab'] in ('24.Reference List','23.Staff'): raise StopLoad('PAYLOAD_TOO_LARGE')
+                midpoint = len(chunk) // 2
+                pending[0:0] = [[chunk[:midpoint]], [chunk[midpoint:]]]
+                continue
+            compiled.append((sql, receipt, group))
+        chunks = [chunk for _, _, group in compiled for chunk in group]
+        return compiled, chunks
+
     def load(self, rows, repeated_rows):
+        rows = private_snapshot(rows)
+        repeated_rows = private_snapshot(repeated_rows)
+        with self.journal.exclusive():
+            return self._load_locked(rows, repeated_rows)
+
+    def reconcile(self, rows, repeated_rows, *, authorized=False):
+        """Explicit operator-authorized read-only reconciliation; never auto-retry.
+
+        Required both to provision a first run and after loss/corruption/uncertainty.
+        Operator must establish that previous requests have settled before invoking.
+        This only restores local state; it never calls load or issues data writes.
+        """
+        if not authorized: raise StopLoad('NOT_APPROVED')
+        rows = private_snapshot(rows); repeated_rows = private_snapshot(repeated_rows)
+        with self.journal.exclusive():
+            self.approval.validate(rows)
+            if self.journal.run_id != self.approval.run_id: raise StopLoad('SCOPE_MISMATCH')
+            if sha(rows) != sha(repeated_rows): raise StopLoad('SOURCE_CHANGED')
+            self.worker.preflight()
+            compiled, chunks = self._compile(rows)
+            rid = literal(self.approval.run_id) + '::uuid'
+            def read_check(body, receipt_expression):
+                sql = ("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;\nSET LOCAL standard_conforming_strings=on;\nSET LOCAL search_path=pg_catalog;\nSET LOCAL lock_timeout='5s';\nSET LOCAL statement_timeout='60s';\nSELECT pg_advisory_xact_lock(718134002);\n" + block(body) +
+                       f"\nSELECT {receipt_expression} AS receipt;\nCOMMIT;")
+                if len(canonical({'query':sql}).encode()) > MAX_BYTES: raise StopLoad('PAYLOAD_TOO_LARGE')
+                response = self.worker.query(sql)
+                if not isinstance(response,list) or len(response)!=1: raise StopLoad('RECEIPT_INVALID')
+                return response[0].get('receipt',{})
+            ids = []
+            # Same bounded groups as loading, but every request is READ ONLY.
+            for _, _, group in compiled:
+                body = f"IF EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid}) THEN\n" + self._run_guard()
+                receipts = []
+                for chunk in group:
+                    check, receipt = self._chunk_sql(chunk, read_only=True)
+                    body += check; receipts.append(receipt)
+                    ids.append(literal(receipt['chunk'])+'::uuid')
+                body += '\nEND IF;'
+                expected = {'run':self.approval.run_id,'checked':receipts}
+                if read_check(body,json_sql(expected)) != expected: raise StopLoad('RECEIPT_INVALID')
+            expected_ids = ','.join(ids) or 'NULL::uuid'
+            body = f"IF EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid}) THEN\n" + self._run_guard()
+            body += f"IF EXISTS(SELECT 1 FROM ids_import.import_chunk WHERE import_run_id={rid} AND import_chunk_id NOT IN ({expected_ids})) OR (SELECT count(*) FROM ids_import.source_row WHERE import_run_id={rid})<>(SELECT coalesce(sum(last_row-first_row+1),0) FROM ids_import.import_chunk WHERE import_run_id={rid} AND status='committed') OR EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid} AND status='completed' AND (SELECT count(*) FROM ids_import.import_chunk WHERE import_run_id={rid})<>{len(chunks)}) THEN RAISE EXCEPTION 'RECONCILIATION_FAILED'; END IF;\nEND IF;"
+            base = {'run':self.approval.run_id,'snapshot':self.approval.snapshot_hash,'reconciled':True}
+            receipt = read_check(body,f"{json_sql(base)} || jsonb_build_object('mode',CASE WHEN EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid}) THEN 'resume' ELSE 'first' END)")
+            mode = receipt.get('mode')
+            if mode not in ('first','resume') or receipt != dict(base,mode=mode): raise StopLoad('RECEIPT_INVALID')
+            self.journal.reconciled(self.approval,mode)
+            return receipt
+
+    def _load_locked(self, rows, repeated_rows):
         # A stopped instance cannot be reused after uncertainty, even if receipt was lost.
         if self.stopped: raise StopLoad('WRITE_FAILED_OR_UNCERTAIN')
         context = None
         try:
             self.approval.validate(rows)
+            if self.journal.run_id != self.approval.run_id: raise StopLoad('SCOPE_MISMATCH')
             previous = self.journal.read()
-            if previous and previous != {'run':self.approval.run_id,'snapshot':self.approval.snapshot_hash,'state':'ready'}:
-                raise StopLoad('WRITE_FAILED_OR_UNCERTAIN')
+            if previous.get('run') != self.approval.run_id or previous.get('snapshot') != self.approval.snapshot_hash or previous.get('state') != 'ready':
+                raise StopLoad('RECONCILIATION_REQUIRED')
             if sha(rows) != sha(repeated_rows): raise StopLoad('SOURCE_CHANGED')
             self.worker.preflight()
-            chunks = chunks_for(rows)
-            groups = []
-            bootstrap = [c for c in chunks if c[0]['tab'] in ('24.Reference List', '23.Staff')]
-            if bootstrap: groups.append(bootstrap)
-            groups += [[c] for c in chunks if c[0]['tab'] not in ('24.Reference List','23.Staff')]
-            # Compile and size-check every transaction before the first write.
-            compiled = []
-            pending = list(groups)
-            while pending:
-                group = pending.pop(0)
-                body = self._run_guard(create=True); receipts = []
-                for chunk in group:
-                    text, receipt = self._chunk_sql(chunk); body += text; receipts.append(receipt)
-                receipt = {'run': self.approval.run_id, 'chunks': receipts}
-                sql = transaction(body, receipt)
-                if len(canonical({'query': sql}).encode()) > MAX_BYTES:
-                    if len(group) != 1 or len(group[0]) < 2: raise StopLoad('PAYLOAD_TOO_LARGE')
-                    chunk = group[0]
-                    if chunk[0]['tab'] in ('24.Reference List','23.Staff'): raise StopLoad('PAYLOAD_TOO_LARGE')
-                    midpoint = len(chunk) // 2
-                    pending[0:0] = [[chunk[:midpoint]], [chunk[midpoint:]]]
-                    continue
-                compiled.append((sql, receipt, group))
-            chunks = [chunk for _, _, group in compiled for chunk in group]
+            compiled, chunks = self._compile(rows)
             for sql, receipt, group in compiled:
                 context = group
                 self._send(sql, receipt)

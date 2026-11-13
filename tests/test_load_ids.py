@@ -5,9 +5,14 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import subprocess
+from importlib.metadata import version
 import unittest
 from unittest.mock import patch
 import uuid
+from pglast import parse_sql, parse_plpgsql
+if version('pglast') != '7.22':
+    raise RuntimeError('Tests require pglast==7.22; install requirements-loader-test.txt')
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import load_ids as L
 
@@ -38,14 +43,18 @@ class FakeWorker:
         if self.mode=='bad_receipt': return []
         # Last SELECT contains the exact safely quoted JSON receipt.
         last=sql.rsplit('\nSELECT ',1)[1]
-        receipt=json.loads(last.split("'::jsonb AS receipt;",1)[0][1:].replace("''", "'"))
+        receipt=json.loads(last.split("'::jsonb",1)[0][1:].replace("''", "'"))
+        if 'reconciled' in receipt:receipt['mode']='first'
         return [{'receipt':receipt}]
 
 class LoadTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.journal=L.Journal(Path(self.temp.name)/'work'/'journal.json')
+        self.journal=L.Journal(Path(self.temp.name)/'state'/(RUN+'.json'))
         self.failures=[];self.worker=FakeWorker();self.rows=[fixture()]
+        with self.journal.exclusive(): self.journal.reconciled(approval(self.rows),'first')
+    def read_state(self):
+        with self.journal.exclusive():return self.journal.read()
     def loader(self, a=None, worker=None):
         return L.Loader(a or approval(self.rows),worker or self.worker,lambda *x:(self.failures.append(x) or True),self.journal)
     def test_default_approval_denies(self):
@@ -81,7 +90,7 @@ class LoadTests(unittest.TestCase):
             self.assertIn(fragment,sql)
         self.assertNotIn('UPDATE ids."monthly_target"',sql)
         self.assertNotIn('ON CONFLICT DO UPDATE',sql)
-        self.assertEqual(self.journal.read()['state'],'ready')
+        self.assertEqual(self.read_state()['state'],'ready')
         self.assertEqual(os.stat(self.journal.path).st_mode&0o777,0o600)
     def test_replay_sql_same_ids_and_hash(self):
         a=self.loader()._chunk_sql(self.rows);b=self.loader()._chunk_sql(copy.deepcopy(self.rows))
@@ -91,7 +100,7 @@ class LoadTests(unittest.TestCase):
         worker=FakeWorker('timeout');loader=self.loader(worker=worker)
         with self.assertRaisesRegex(L.StopLoad,'WRITE_FAILED_OR_UNCERTAIN'):loader.load(self.rows,self.rows)
         self.assertEqual(len(worker.sql),1)
-        self.assertEqual(self.journal.read()['state'],'in_flight')
+        self.assertEqual(self.read_state()['state'],'in_flight')
         with self.assertRaises(L.StopLoad):self.loader().load(self.rows,self.rows)
         self.assertFalse(self.worker.sql)
         self.assertNotIn('PRIVATE',json.dumps(self.failures))
@@ -149,6 +158,7 @@ class LoadTests(unittest.TestCase):
     def test_oversized_chunks_split_before_any_write(self):
         rows=[fixture(row=n) for n in range(3,103)]
         worker=FakeWorker()
+        with self.journal.exclusive():self.journal.reconciled(approval(rows),'first')
         with patch.object(L,'MAX_BYTES',25000):
             L.Loader(approval(rows),worker,lambda *x:True,self.journal).load(rows,rows)
         self.assertGreater(len(worker.sql),2)
@@ -164,6 +174,7 @@ class LoadTests(unittest.TestCase):
         rows=[]
         for tab in ('24.Reference List','23.Staff'):
             rows.extend(fixture(tab,row=n) for n in range(3,L.TABS[tab]['last_data_row']+1))
+        with self.journal.exclusive():self.journal.reconciled(approval(rows),'first')
         worker=FakeWorker();L.Loader(approval(rows),worker,lambda *x:None,self.journal).load(rows,rows)
         self.assertEqual(len(worker.sql),2)
         sql=worker.sql[0]
@@ -175,9 +186,72 @@ class LoadTests(unittest.TestCase):
     def test_warning_manifest_counts(self):
         self.assertEqual(len(L.AUDIT['approved_warning_rows']['weekly_check_first_held_rule']['rows']),61)
         self.assertIn('mou_signed_missing_date',L.warnings_for('4.Partner Organisation',5))
+    def test_missing_state_requires_explicit_readonly_reconciliation(self):
+        self.journal.path.unlink()
+        with self.assertRaisesRegex(L.StopLoad,'RECONCILIATION_REQUIRED'):self.loader().load(self.rows,self.rows)
+        self.assertFalse(self.worker.sql)
+        new=self.loader()
+        with self.assertRaisesRegex(L.StopLoad,'NOT_APPROVED'):new.reconcile(self.rows,self.rows)
+        new.reconcile(self.rows,self.rows,authorized=True)
+        self.assertTrue(all('READ ONLY' in sql for sql in self.worker.sql))
+        for sql in self.worker.sql:
+            parse_sql(sql)
+            parse_plpgsql(sql[sql.index('DO '):sql.index('\nSELECT ',sql.index('DO '))])
+        self.assertEqual(self.read_state()['mode'],'first')
+    def test_total_state_loss_cannot_auto_initialize(self):
+        self.journal.path.unlink();self.journal.marker.unlink()
+        with self.assertRaisesRegex(L.StopLoad,'RECONCILIATION_REQUIRED'):self.loader().load(self.rows,self.rows)
+        self.assertFalse(self.worker.sql)
+    def test_corrupt_and_mismatched_generation_stop(self):
+        self.journal.path.write_text('invalid JSON')
+        with self.assertRaisesRegex(L.StopLoad,'RECONCILIATION_REQUIRED'):self.loader().load(self.rows,self.rows)
+        self.assertFalse(self.worker.sql)
+        with self.journal.exclusive():self.journal.reconciled(approval(self.rows),'first')
+        self.journal.marker.write_text('{}')
+        with self.assertRaisesRegex(L.StopLoad,'RECONCILIATION_REQUIRED'):self.loader().load(self.rows,self.rows)
+    def test_wrong_attempt_cannot_clear_inflight(self):
+        with self.journal.exclusive():
+            self.journal.begin(approval(self.rows),'owner',{'synthetic':True})
+            with self.assertRaisesRegex(L.StopLoad,'ATTEMPT_CONFLICT'):self.journal.complete('other')
+            self.assertEqual(self.journal.read()['attempt'],'owner')
+            self.assertEqual(self.journal.read()['state'],'in_flight')
+    def test_mutation_during_preflight_cannot_change_compiled_snapshot(self):
+        original_id=self.rows[0]['record']['target_id']
+        def mutate():
+            self.rows[0]['record']['target_id']='SYNTHETIC_UNAPPROVED_MUTATION'
+            self.rows[0]['raw'][0]={'stringValue':'SYNTHETIC_UNAPPROVED_MUTATION'}
+        self.worker.preflight=mutate
+        self.loader().load(self.rows,copy.deepcopy(self.rows))
+        self.assertNotIn('SYNTHETIC_UNAPPROVED_MUTATION',self.worker.sql[0])
+        self.assertIn(original_id,self.worker.sql[0])
+    def test_private_snapshot_is_recursively_immutable(self):
+        frozen=L.private_snapshot(self.rows)
+        with self.assertRaises(TypeError):frozen[0]['record']['target_id']='changed'
+        with self.assertRaises(AttributeError):frozen.append({})
+    def test_run_lock_precedes_journal_check_and_preflight(self):
+        with self.journal.exclusive():
+            other=L.Journal(self.journal.path)
+            loader=L.Loader(approval(self.rows),self.worker,lambda *x:True,other)
+            with self.assertRaisesRegex(L.StopLoad,'RUN_LOCKED'):loader.load(self.rows,self.rows)
+        self.assertEqual(self.worker.preflights,0);self.assertFalse(self.worker.sql)
+    def test_repository_state_path_is_rejected(self):
+        with self.assertRaisesRegex(L.StopLoad,'SCOPE_MISMATCH'):L.Journal(L.ROOT/'work'/(RUN+'.json'))
+    def test_missing_parser_fails_instead_of_skipping(self):
+        result=subprocess.run([sys.executable,'-I','-S',str(Path(__file__).resolve())],capture_output=True,text=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('pglast',result.stderr)
+    def test_run_lock_excludes_another_process(self):
+        code="""import sys
+sys.path.insert(0,sys.argv[1])
+from load_ids import Journal,StopLoad
+try:
+ with Journal(sys.argv[2]).exclusive():print('UNEXPECTED_LOCK')
+except StopLoad as error:print(error.code)
+"""
+        with self.journal.exclusive():
+            result=subprocess.run([sys.executable,'-c',code,str(L.ROOT/'scripts'),str(self.journal.path)],capture_output=True,text=True,timeout=10)
+        self.assertEqual(result.returncode,0);self.assertEqual(result.stdout.strip(),'RUN_LOCKED')
     def test_postgres_parses_all_table_statements(self):
-        try:from pglast import parse_sql,parse_plpgsql
-        except ImportError:self.skipTest('install pinned SQL parser')
         for tab in L.TABLES:
             with patch.dict(L.TABS[tab],{'last_data_row':max(3,L.TABS[tab]['last_data_row'])}):
                 row=fixture(tab)
@@ -187,8 +261,6 @@ class LoadTests(unittest.TestCase):
             parse_sql(sql)
             parse_plpgsql(sql[sql.index('DO '):sql.index('\nSET CONSTRAINTS ALL IMMEDIATE;')])
     def test_postgres_parses_generated_sql(self):
-        try:from pglast import parse_sql, parse_plpgsql
-        except ImportError:self.skipTest('install pinned requirements-loader-test.txt for SQL parser checks')
         self.loader().load(self.rows,self.rows)
         for sql in self.worker.sql:
             parse_sql(sql)
