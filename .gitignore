@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+work/
+raw/
+extracts/
+*.csv
+*.tsv
+*.xlsx
+*.drawio
+node_modules/
+__pycache__/
+*.pyc
+supabase/.temp/
+supabase/.branches/

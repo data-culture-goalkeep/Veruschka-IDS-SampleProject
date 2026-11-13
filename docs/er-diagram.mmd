@@ -1,0 +1,411 @@
+erDiagram
+    mobilisation_lead {
+        text candidate_id PK
+        text learner_id FK
+        text source_type_id FK
+        text programme_interested_id FK
+        text education_level_id FK
+        text employment_status_id FK
+        text current_status_id FK
+        text assigned_associate_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    lead_follow_up {
+        text followup_id PK
+        text lead_id FK
+        text stage_id FK
+        text follow_up_type_id FK
+        text channel_id FK
+        text outcome_id FK
+        text priority_id FK
+        text owner_staff_id FK
+        text closure_status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    mobilisation_activity {
+        text activity_id PK
+        text associate_staff_id FK
+        text activity_type_id FK
+        text partner_organisation_id FK
+        text channel_id FK
+        text status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    partner_organisation {
+        text partner_organisation_id PK
+        text partnership_status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    monthly_target {
+        text target_id PK
+        text staff_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    report_meeting_log {
+        text log_id PK
+        text type_id FK
+        text owner_staff_id FK
+        text status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    learner_profile {
+        text learner_id PK
+        text qualification_id FK
+        text residence_type_id FK
+        text residence_ownership_id FK
+        text family_income_band_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    family_contact {
+        text contact_id PK
+        text learner_id FK
+        text relationship_to_learner_id FK
+        text contact_role_id FK
+        uuid auth_user_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    learner_sensitive_details {
+        text learner_id PK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    batch {
+        text batch_id PK
+        text centre_id FK
+        text center_type_id FK
+        text program_id FK
+        text shift_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    enrolment {
+        text enrolment_id PK
+        text learner_id FK
+        text batch_id FK
+        text status_id FK
+        text exit_outcome_id FK
+        text source_type_id FK
+        text sourcing_associate_id FK
+        text parents_meeting_relationship_id FK
+        text supporter_contact_id FK
+        text programme_associate_staff_id FK
+        text enrolled_by_staff_id FK
+        text programme_level_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    fee_instalment {
+        text instalment_id PK
+        text enrolment_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    fee_payment {
+        text payment_id PK
+        text enrolment_id FK
+        text payment_type_id FK
+        text payment_mode_id FK
+        text received_by_staff_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    master_programme_schedule {
+        text master_programme_schedule_id PK
+        text programme_id FK
+        text session_type_id FK
+        text topic_id FK
+        text assessment_type_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    standard_topic {
+        text topic_id PK
+        text session_type_id FK
+        text curriculum_strand_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    batch_schedule {
+        text batch_schedule_id PK
+        text batch_id FK
+        text master_programme_schedule_id FK
+        text session_type_id FK
+        text topic_id FK
+        text facilitator_staff_id FK
+        text assessment_type_id FK
+        text delivery_status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    learner_session_log {
+        text learner_session_log_id PK
+        text enrolment_id FK
+        text batch_schedule_id FK
+        text home_practice_status_id FK
+        text journal_status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    goal {
+        text goal_id PK
+        text enrolment_id FK
+        text goal_section_id FK
+        text responsible_contact_id FK
+        text goal_status_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    goal_review {
+        text goal_review_id PK
+        text goal_id FK
+        text faculty_rating_id FK
+        text family_rating_id FK
+        text skill_transfer FK
+        text status_id FK
+        text ideal_seed_pathway FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    assessment_event {
+        text assessment_event_id PK
+        text enrolment_id FK
+        text batch_schedule_id FK
+        text assessment_type_id FK
+        text assessor_staff_id FK
+        text supported_by_contact_id FK
+        text result_status_id FK
+        text assessment_stage_id FK
+        text measure_method_id FK
+        text approved_by_staff_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    criterion_catalogue {
+        text criterion_id PK
+        text assessment_type_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    criterion_score {
+        text criterion_score_id PK
+        text assessment_event_id FK
+        text criterion_id FK
+        text rating_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    staff {
+        text staff_id PK
+        uuid auth_user_id FK
+        text staff_type_id FK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    reference_list {
+        text reference_value_id PK
+        text created_by FK
+        text updated_by FK
+        uuid source_row_id FK
+    }
+    learner_profile o|--o| mobilisation_lead : "learner_id"
+    reference_list o|--o{ mobilisation_lead : "source_type_id"
+    reference_list o|--o{ mobilisation_lead : "programme_interested_id"
+    reference_list o|--o{ mobilisation_lead : "education_level_id"
+    reference_list o|--o{ mobilisation_lead : "employment_status_id"
+    reference_list o|--o{ mobilisation_lead : "current_status_id"
+    staff o|--o{ mobilisation_lead : "assigned_associate_id"
+    staff o|--o{ mobilisation_lead : "created_by"
+    staff o|--o{ mobilisation_lead : "updated_by"
+    mobilisation_lead ||--o{ lead_follow_up : "lead_id"
+    reference_list o|--o{ lead_follow_up : "stage_id"
+    reference_list o|--o{ lead_follow_up : "follow_up_type_id"
+    reference_list o|--o{ lead_follow_up : "channel_id"
+    reference_list o|--o{ lead_follow_up : "outcome_id"
+    reference_list o|--o{ lead_follow_up : "priority_id"
+    staff o|--o{ lead_follow_up : "owner_staff_id"
+    reference_list o|--o{ lead_follow_up : "closure_status_id"
+    staff o|--o{ lead_follow_up : "created_by"
+    staff o|--o{ lead_follow_up : "updated_by"
+    staff o|--o{ mobilisation_activity : "associate_staff_id"
+    reference_list o|--o{ mobilisation_activity : "activity_type_id"
+    partner_organisation o|--o{ mobilisation_activity : "partner_organisation_id"
+    reference_list o|--o{ mobilisation_activity : "channel_id"
+    reference_list o|--o{ mobilisation_activity : "status_id"
+    staff o|--o{ mobilisation_activity : "created_by"
+    staff o|--o{ mobilisation_activity : "updated_by"
+    reference_list o|--o{ partner_organisation : "partnership_status_id"
+    staff o|--o{ partner_organisation : "created_by"
+    staff o|--o{ partner_organisation : "updated_by"
+    staff ||--o{ monthly_target : "staff_id"
+    staff o|--o{ monthly_target : "created_by"
+    staff o|--o{ monthly_target : "updated_by"
+    reference_list o|--o{ report_meeting_log : "type_id"
+    staff o|--o{ report_meeting_log : "owner_staff_id"
+    reference_list o|--o{ report_meeting_log : "status_id"
+    staff o|--o{ report_meeting_log : "created_by"
+    staff o|--o{ report_meeting_log : "updated_by"
+    reference_list o|--o{ learner_profile : "qualification_id"
+    reference_list o|--o{ learner_profile : "residence_type_id"
+    reference_list o|--o{ learner_profile : "residence_ownership_id"
+    reference_list o|--o{ learner_profile : "family_income_band_id"
+    staff o|--o{ learner_profile : "created_by"
+    staff o|--o{ learner_profile : "updated_by"
+    learner_profile ||--o{ family_contact : "learner_id"
+    reference_list o|--o{ family_contact : "relationship_to_learner_id"
+    reference_list o|--o{ family_contact : "contact_role_id"
+    auth_users o|--o{ family_contact : "auth_user_id"
+    staff o|--o{ family_contact : "created_by"
+    staff o|--o{ family_contact : "updated_by"
+    learner_profile ||--o| learner_sensitive_details : "learner_id"
+    staff o|--o{ learner_sensitive_details : "created_by"
+    staff o|--o{ learner_sensitive_details : "updated_by"
+    reference_list o|--o{ batch : "centre_id"
+    reference_list o|--o{ batch : "center_type_id"
+    reference_list o|--o{ batch : "program_id"
+    reference_list o|--o{ batch : "shift_id"
+    staff o|--o{ batch : "created_by"
+    staff o|--o{ batch : "updated_by"
+    learner_profile ||--o{ enrolment : "learner_id"
+    batch ||--o{ enrolment : "batch_id"
+    reference_list o|--o{ enrolment : "status_id"
+    reference_list o|--o{ enrolment : "exit_outcome_id"
+    reference_list o|--o{ enrolment : "source_type_id"
+    staff o|--o{ enrolment : "sourcing_associate_id"
+    reference_list o|--o{ enrolment : "parents_meeting_relationship_id"
+    family_contact o|--o{ enrolment : "supporter_contact_id"
+    staff o|--o{ enrolment : "programme_associate_staff_id"
+    staff o|--o{ enrolment : "enrolled_by_staff_id"
+    reference_list o|--o{ enrolment : "programme_level_id"
+    staff o|--o{ enrolment : "created_by"
+    staff o|--o{ enrolment : "updated_by"
+    enrolment ||--o{ fee_instalment : "enrolment_id"
+    staff o|--o{ fee_instalment : "created_by"
+    staff o|--o{ fee_instalment : "updated_by"
+    enrolment ||--o{ fee_payment : "enrolment_id"
+    reference_list ||--o{ fee_payment : "payment_type_id"
+    reference_list o|--o{ fee_payment : "payment_mode_id"
+    staff o|--o{ fee_payment : "received_by_staff_id"
+    staff o|--o{ fee_payment : "created_by"
+    staff o|--o{ fee_payment : "updated_by"
+    reference_list ||--o{ master_programme_schedule : "programme_id"
+    reference_list o|--o{ master_programme_schedule : "session_type_id"
+    standard_topic o|--o{ master_programme_schedule : "topic_id"
+    reference_list o|--o{ master_programme_schedule : "assessment_type_id"
+    staff o|--o{ master_programme_schedule : "created_by"
+    staff o|--o{ master_programme_schedule : "updated_by"
+    reference_list o|--o{ standard_topic : "session_type_id"
+    reference_list o|--o{ standard_topic : "curriculum_strand_id"
+    staff o|--o{ standard_topic : "created_by"
+    staff o|--o{ standard_topic : "updated_by"
+    batch ||--o{ batch_schedule : "batch_id"
+    master_programme_schedule o|--o{ batch_schedule : "master_programme_schedule_id"
+    reference_list o|--o{ batch_schedule : "session_type_id"
+    standard_topic o|--o{ batch_schedule : "topic_id"
+    staff o|--o{ batch_schedule : "facilitator_staff_id"
+    reference_list o|--o{ batch_schedule : "assessment_type_id"
+    reference_list o|--o{ batch_schedule : "delivery_status_id"
+    staff o|--o{ batch_schedule : "created_by"
+    staff o|--o{ batch_schedule : "updated_by"
+    enrolment ||--o{ learner_session_log : "enrolment_id"
+    batch_schedule ||--o{ learner_session_log : "batch_schedule_id"
+    reference_list o|--o{ learner_session_log : "home_practice_status_id"
+    reference_list o|--o{ learner_session_log : "journal_status_id"
+    staff o|--o{ learner_session_log : "created_by"
+    staff o|--o{ learner_session_log : "updated_by"
+    enrolment ||--o{ goal : "enrolment_id"
+    reference_list o|--o{ goal : "goal_section_id"
+    family_contact o|--o{ goal : "responsible_contact_id"
+    reference_list o|--o{ goal : "goal_status_id"
+    staff o|--o{ goal : "created_by"
+    staff o|--o{ goal : "updated_by"
+    goal ||--o{ goal_review : "goal_id"
+    reference_list o|--o{ goal_review : "faculty_rating_id"
+    reference_list o|--o{ goal_review : "family_rating_id"
+    reference_list o|--o{ goal_review : "skill_transfer"
+    reference_list o|--o{ goal_review : "status_id"
+    reference_list o|--o{ goal_review : "ideal_seed_pathway"
+    staff o|--o{ goal_review : "created_by"
+    staff o|--o{ goal_review : "updated_by"
+    enrolment ||--o{ assessment_event : "enrolment_id"
+    batch_schedule o|--o{ assessment_event : "batch_schedule_id"
+    reference_list ||--o{ assessment_event : "assessment_type_id"
+    staff o|--o{ assessment_event : "assessor_staff_id"
+    family_contact o|--o{ assessment_event : "supported_by_contact_id"
+    reference_list o|--o{ assessment_event : "result_status_id"
+    reference_list o|--o{ assessment_event : "assessment_stage_id"
+    reference_list o|--o{ assessment_event : "measure_method_id"
+    staff o|--o{ assessment_event : "approved_by_staff_id"
+    staff o|--o{ assessment_event : "created_by"
+    staff o|--o{ assessment_event : "updated_by"
+    reference_list ||--o{ criterion_catalogue : "assessment_type_id"
+    staff o|--o{ criterion_catalogue : "created_by"
+    staff o|--o{ criterion_catalogue : "updated_by"
+    assessment_event ||--o{ criterion_score : "assessment_event_id"
+    criterion_catalogue ||--o{ criterion_score : "criterion_id"
+    reference_list o|--o{ criterion_score : "rating_id"
+    staff o|--o{ criterion_score : "created_by"
+    staff o|--o{ criterion_score : "updated_by"
+    auth_users o|--o| staff : "auth_user_id"
+    reference_list o|--o{ staff : "staff_type_id"
+    staff o|--o{ staff : "created_by"
+    staff o|--o{ staff : "updated_by"
+    staff o|--o{ reference_list : "created_by"
+    staff o|--o{ reference_list : "updated_by"
+    ids_import_source_row o|--o{ mobilisation_lead : source_row_id
+    ids_import_source_row o|--o{ lead_follow_up : source_row_id
+    ids_import_source_row o|--o{ mobilisation_activity : source_row_id
+    ids_import_source_row o|--o{ partner_organisation : source_row_id
+    ids_import_source_row o|--o{ monthly_target : source_row_id
+    ids_import_source_row o|--o{ report_meeting_log : source_row_id
+    ids_import_source_row o|--o{ learner_profile : source_row_id
+    ids_import_source_row o|--o{ family_contact : source_row_id
+    ids_import_source_row o|--o{ learner_sensitive_details : source_row_id
+    ids_import_source_row o|--o{ batch : source_row_id
+    ids_import_source_row o|--o{ enrolment : source_row_id
+    ids_import_source_row o|--o{ fee_instalment : source_row_id
+    ids_import_source_row o|--o{ fee_payment : source_row_id
+    ids_import_source_row o|--o{ master_programme_schedule : source_row_id
+    ids_import_source_row o|--o{ standard_topic : source_row_id
+    ids_import_source_row o|--o{ batch_schedule : source_row_id
+    ids_import_source_row o|--o{ learner_session_log : source_row_id
+    ids_import_source_row o|--o{ goal : source_row_id
+    ids_import_source_row o|--o{ goal_review : source_row_id
+    ids_import_source_row o|--o{ assessment_event : source_row_id
+    ids_import_source_row o|--o{ criterion_catalogue : source_row_id
+    ids_import_source_row o|--o{ criterion_score : source_row_id
+    ids_import_source_row o|--o{ staff : source_row_id
+    ids_import_source_row o|--o{ reference_list : source_row_id
+    ids_import_import_run ||--o{ ids_import_import_chunk : import_run_id
+    ids_import_import_run ||--o{ ids_import_source_row : import_run_id
+    ids_import_source_row ||--o{ ids_import_validation_issue : source_row_id
