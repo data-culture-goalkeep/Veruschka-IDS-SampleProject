@@ -1,0 +1,22 @@
+# Local configuration only. No hosted remotes or credentials.
+project_id = "veruschka-ids-local"
+
+[api]
+enabled = true
+port = 54321
+# Neither ids nor ids_import is exposed.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []
