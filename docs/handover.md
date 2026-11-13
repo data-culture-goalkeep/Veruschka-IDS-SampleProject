@@ -281,3 +281,19 @@ Data API exposed schemas remain public,graphql_public. Security advisor:
 28 INFO rls_enabled_no_policy findings, expected for the approved closed
 access model; zero WARN or ERROR findings. The two prior function warnings
 are absent. No automatic remediation or access-model changes were made.
+
+## 2026-11-13 — Stage 4 read-only trial and SQL adapter PR
+
+User approved the exact 124-row read-only trial, deferred Reference List/Staff
+bootstrap design, 100-row maximum chunks and stop-on-change/conflict policy.
+All 124 rows transformed after adding strict text-time parsing for four schedule
+rows. Two source reads matched. There were 115 approved warning instances, zero
+final quarantine candidates, 12 stale temporal formats ignored and 168 preserved
+null fields. No sensitive values were printed or put in the failure log. All 25
+source-log tabs were verified empty; no failure-log write or database request ran.
+
+A new feature branch from main 51d0c92139ce385c0f93085d4e5a8b03185d8446 adds
+the SQL adapter, offline tests and [load-path.md](load-path.md). The source trial
+is not a hosted load or a dependency-complete FK trial. Historical exception
+annotations require baseline verification before any separately approved load.
+No migrations, grants, source files or seed were changed. No merge is authorized.
