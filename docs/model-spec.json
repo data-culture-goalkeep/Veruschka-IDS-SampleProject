@@ -31,6 +31,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -56,6 +58,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -87,6 +91,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -107,6 +113,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -125,6 +133,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -149,6 +159,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -185,6 +197,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -206,6 +220,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -227,6 +243,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -256,6 +274,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -300,6 +320,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -318,6 +340,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -339,6 +363,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -364,6 +390,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -384,6 +412,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -415,6 +445,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -434,6 +466,11 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "attendance_reference_id", "type": "text", "nullable": true, "generated": true},
+        {"name": "context_learner_id", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_batch_id", "type": "text", "nullable": false, "generated": false}
       ]
     },
     {
@@ -461,6 +498,12 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "context_learner_id", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_batch_id", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_programme_id", "type": "text", "nullable": false, "generated": true},
+        {"name": "context_section_key", "type": "text", "nullable": false, "generated": true}
       ]
     },
     {
@@ -493,6 +536,9 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "context_section_key", "type": "text", "nullable": false, "generated": false}
       ]
     },
     {
@@ -530,6 +576,10 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "context_learner_id", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_batch_id", "type": "text", "nullable": false, "generated": false}
       ]
     },
     {
@@ -553,6 +603,9 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "context_score_ceiling", "type": "numeric", "nullable": false, "generated": true}
       ]
     },
     {
@@ -571,6 +624,11 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
+        {"name": "context_assessment_type_id", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_rubric_version", "type": "text", "nullable": false, "generated": false},
+        {"name": "context_score_ceiling", "type": "numeric", "nullable": false, "generated": false}
       ]
     },
     {
@@ -590,6 +648,8 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     },
     {
@@ -607,7 +667,23 @@
         {"name": "updated_at", "type": "timestamptz", "primary_key": false, "nullable": true},
         {"name": "created_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}},
         {"name": "updated_by", "type": "text", "primary_key": false, "nullable": true, "foreign_key_hint": true, "references": {"table": "staff", "column": "staff_id"}}
+      ],
+      "integrity_fields": [
       ]
     }
+  ],
+  "integrity_relationships": [
+    {"table": "enrolment", "columns": ["supporter_contact_id", "learner_id"], "references": {"table": "family_contact", "columns": ["contact_id", "learner_id"]}},
+    {"table": "goal", "columns": ["enrolment_id", "context_learner_id", "context_batch_id"], "references": {"table": "enrolment", "columns": ["enrolment_id", "learner_id", "batch_id"]}},
+    {"table": "assessment_event", "columns": ["enrolment_id", "context_learner_id", "context_batch_id"], "references": {"table": "enrolment", "columns": ["enrolment_id", "learner_id", "batch_id"]}},
+    {"table": "learner_session_log", "columns": ["enrolment_id", "context_learner_id", "context_batch_id"], "references": {"table": "enrolment", "columns": ["enrolment_id", "learner_id", "batch_id"]}},
+    {"table": "goal", "columns": ["responsible_contact_id", "context_learner_id"], "references": {"table": "family_contact", "columns": ["contact_id", "learner_id"]}},
+    {"table": "goal", "columns": ["context_batch_id", "context_programme_id"], "references": {"table": "batch", "columns": ["batch_id", "program_id"]}},
+    {"table": "assessment_event", "columns": ["supported_by_contact_id", "context_learner_id"], "references": {"table": "family_contact", "columns": ["contact_id", "learner_id"]}},
+    {"table": "assessment_event", "columns": ["batch_schedule_id", "context_batch_id"], "references": {"table": "batch_schedule", "columns": ["batch_schedule_id", "batch_id"]}},
+    {"table": "learner_session_log", "columns": ["batch_schedule_id", "context_batch_id"], "references": {"table": "batch_schedule", "columns": ["batch_schedule_id", "batch_id"]}},
+    {"table": "criterion_score", "columns": ["assessment_event_id", "context_assessment_type_id", "context_rubric_version"], "references": {"table": "assessment_event", "columns": ["assessment_event_id", "assessment_type_id", "rubric_version"]}},
+    {"table": "criterion_score", "columns": ["criterion_id", "context_assessment_type_id", "context_rubric_version", "context_score_ceiling"], "references": {"table": "criterion_catalogue", "columns": ["criterion_id", "assessment_type_id", "rubric_version", "context_score_ceiling"]}},
+    {"table": "goal_review", "columns": ["goal_id", "context_section_key"], "references": {"table": "goal", "columns": ["goal_id", "context_section_key"]}}
   ]
 }

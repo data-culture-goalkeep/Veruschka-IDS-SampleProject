@@ -2,6 +2,9 @@
 
 ## Result
 
+The original Stage 3 result is retained below. The current two-migration review-fix
+run and both review checklists are recorded in the dated section at the end.
+
 `python scripts/validate_local.py` passed on an isolated PostgreSQL **17.11**
 container using only invented dummy records. Migration file:
 `20261113095327_private_ids_schema.sql`. No hosted migration was applied.
@@ -63,3 +66,50 @@ claimed to be advisor-clean on an environment where it has not been applied.
 
 No source load, parser implementation, Google failure-log Sheet, remote application
 or PR merge was performed. Schema-only work does not authorize a later loader.
+
+## 2026-11-13 — GitHub P1 and chat-review fixes
+
+Both local migrations passed together:
+
+- `20261113095327_private_ids_schema.sql` (original, unchanged)
+- `20261113111942_review_integrity_and_privacy_fixes.sql` (additive review fixes)
+
+`python scripts/validate_local.py` runs the original contract, the review
+regressions, a committed Staff/Reference bootstrap transaction and real concurrent
+database sessions. The test database remains a disposable, network-isolated
+PostgreSQL 17.11 container; no Supabase DDL or source writes are performed.
+
+| Review | Finding / correction | Verification |
+|---|---|---|
+| GitHub P1, comment 4562558469, original SQL lines 56–57 | Bind source row to chunk sheet and first/last bounds; bind file to run | Wrong sheet and wrong file rejected with 23503; below/above range and spoofed bounds rejected with 23514; valid boundary rows accepted |
+| Chat: EXECUTE hardening | Narrow revoke from PUBLIC, anon, authenticated on existing public.rls_auto_enable() | ACL checks deny inherited/direct access; owner retains access; local event trigger still enables RLS |
+| Chat: unknown fee obligation | Preserve NULL credit when no instalments exist | NULL due/balance/credit asserted, with and without a payment |
+| Chat: rubric provenance | Compare definition/scoring fields only | Source-row lineage, created/updated timestamps and actors update successfully; wording/weight/scoring changes remain rejected once used |
+| Chat: concurrency | Composite FKs replace relational snapshot scans | Parent-contact change blocks behind an uncommitted child and then fails under READ COMMITTED and REPEATABLE READ; no wrong-learner relationship survives |
+| Chat: remaining existence check | Definition updates require READ COMMITTED; scores hold SHARE on catalogue | Concurrent score commits; waiting definition rewrite fails; REPEATABLE READ and SERIALIZABLE definition updates explicitly fail with 0A000 |
+| Chat: Staff/Reference cycle | Defer FKs in one bootstrap transaction, preserving nonnull actors | Real commit, actor readback, then committed dummy cleanup; no source audit fields replaced with null |
+| Chat: redundant indexes | Remove indexes covered by compatible unique-key prefixes | Original FK-index coverage test still passes; no exact duplicate nonunique/unique indexes remain |
+| Chat: ER completeness | Include attendance reference, audit chunk scope and all new composite FKs | Validator compares all live local FK edges with ER; model manifest columns/types/nullability also match the local catalog |
+
+The concurrency suite has three synchronized two-session races and two isolation
+rejection cases. It observes a real database lock wait before releasing the
+competing transaction; it does not rely on a fixed sleep to assume concurrency.
+Catalog/diagram agreement covers all 186 FKs; the schema still has 28 tables,
+RLS on every table, zero policies and no API-role object access.
+Statements have bounded waits and the harness closes sessions/removes the
+container even on failure.
+
+The compatibility fixture now includes a local public.rls_auto_enable event
+trigger and intentionally broad global default grants. This verifies that the
+explicit object revokes close the model despite inherited defaults. The fixture
+is not a complete Supabase platform or PostgREST deployment.
+
+The previous trigger-error expectations changed from 23514 to 23503 where the
+same invalid relationships are now rejected by declarative FKs. Constraints were
+not loosened to make the original tests pass. NULL ratings and approved source
+exceptions remain accepted.
+
+Hosted limits remain: the function revoke is only in an unapplied SQL file; no
+claim is made that live advisor warnings have cleared. Hosted migration history,
+API exposure and platform behavior must be verified only during a separately
+approved application. No real source records were used in these local tests.

@@ -165,3 +165,91 @@ as a deliverable of this PR. Never retry a failed or uncertain write blindly.
 Migration and load outcome at this handover: **hosted migration not applied;
 zero source records loaded; no policies/access model approved; PR must not merge
 automatically.**
+
+## 2026-11-13 — Follow-up: both reviews and fixes on PR #1
+
+This section supplements the original Stage 3 history above. The user authorized
+fixing every review finding on the same feature branch, local validation and a
+push to PR #1. They explicitly prohibited hosted application and merging.
+
+Review sources:
+- GitHub P1 comment `4562558469`, attached to original migration lines 56–57:
+  source rows could claim a checkpoint from a different sheet/range.
+- Read-only chat review of commit `59dff307`: incomplete run/file lineage,
+  unknown credit becoming zero, overbroad rubric freeze, snapshot-dependent
+  relationship checks, missing source-equivalent bootstrap test, duplicate
+  indexes and incomplete ER edges. It also recommended hardening the existing
+  public event-trigger function's execution permissions.
+
+The original migration is unchanged. Additive migration
+`20261113111942_review_integrity_and_privacy_fixes.sql` contains the fixes:
+
+| Finding | Fix / retained limitation |
+|---|---|
+| GitHub P1 chunk scope | Source-row FK now includes chunk/run/sheet/first/last bounds; copied bounds plus CHECK enforce original-row membership, including parent scope changes |
+| Chat run/file lineage | Composite FK requires source_row.source_file_id to equal its run's file |
+| Existing public function permissions | Revoke EXECUTE from PUBLIC, anon, authenticated only; retain owner, function body and registered event trigger |
+| Fee credit | No instalments means NULL due, balance and credit, even if payments exist |
+| Rubric provenance | Only identifier/definition/scoring columns are protected; source_row_id and source audit timestamps/actors can change without rewriting the definition |
+| Relationship concurrency | Composite FKs enforce learner/contact, enrolment/session batch, ILS goal and event/criterion rubric context; remove the global parent-scan trigger |
+| Conditional/rubric consistency | Non-null context keys and CHECKs enforce goal-section ranges and criterion ceilings without nullable-composite-FK bypasses |
+| Used-rubric existence race | Score writes hold SHARE on the criterion; actual definition updates require READ COMMITTED and reject other isolation levels with 0A000 |
+| Staff/Reference audit cycle | Documented one deferred bootstrap transaction; committed test preserves nonnull created_by/updated_by on both sides |
+| Index redundancy | Remove compatible nonunique indexes already covered by a unique-key prefix; FK coverage remains verified |
+| ER/docs mismatch | Complete attendance-reference and source-row/chunk edges; add all composite keys and document derived context separately from source fields |
+
+### Derived context is metadata, not source repair
+
+The `context_*` columns and chunk bounds mirror known parent keys/rules. The
+loader must omit these columns: triggers/generated expressions populate them,
+and declarative FKs validate the context even if a transaction saw an old parent
+snapshot. Raw source fields are untouched. A missing catalogue maximum remains
+NULL in maximum_score; an internal Infinity ceiling means no supplied upper
+bound. A missing goal section remains NULL; an internal empty context key allows
+the FK to validate that missing section without skipping the relationship.
+
+Parent context changes do not silently cascade. To make a compatible deliberate
+change, defer the context FKs, update the parent, refresh the affected child rows,
+then make constraints immediate before commit. Wrong-learner, wrong-batch,
+wrong-rubric and invalid numeric-range changes still fail. The old table-scan
+trigger is gone. The old trigger-based check error codes become FK error codes
+where appropriate; the original regression tests were updated accordingly.
+
+Supported isolation: ordinary context integrity is declarative, with concurrent
+parent-change tests at READ COMMITTED and REPEATABLE READ. Only actual updates
+to catalogue definition/scoring fields are restricted to READ COMMITTED because
+used-definition immutability still needs a fresh existence-check snapshot.
+Metadata-only catalogue updates do not have this restriction. Concurrent tests
+verify that a waiting definition change sees the newly committed score and fails.
+No claim is made that every possible application transaction has been tested.
+
+### Source-equivalent bootstrap procedure
+
+Staff rows reference staff_type options; reference rows name staff audit actors.
+When an approved loader is eventually built, it must bootstrap these two sources
+in a single transaction with `SET CONSTRAINTS ALL DEFERRED`, insert their real
+IDs and actor links, then `SET CONSTRAINTS ALL IMMEDIATE` before committing. Do
+not strip the actors, invent users or commit one side of the cycle independently.
+`tests/bootstrap.sql` commits and reads back the analogous dummy cycle. This
+does not authorize a real source load or define the remaining chunking plan.
+
+### Function assessment and unchanged hosted state
+
+The read-only review found public.rls_auto_enable() returns event_trigger, is
+owned by postgres, uses SECURITY DEFINER with fixed pg_catalog search_path,
+quotes table identifiers, and only enables RLS on newly created public tables.
+It catches failures and logs them; it is not a substitute for explicit RLS in
+the migrations. PostgreSQL rejects ordinary function invocation, so the broad
+EXECUTE ACL did not establish a callable API data-exposure path. The narrow
+revoke is hardening and is tested locally with a compatibility event trigger.
+
+The actual Supabase function and its ACL have **not** been changed. The proposed
+revoke takes effect only after explicit approval to apply the reviewed migrations.
+No live warning is claimed resolved, no new policies/grants were added, no source
+file was edited or loaded, and PR #1 remains unmerged.
+
+Local verification: original contract, review regressions, committed bootstrap,
+model/catalog/ER agreement, three real concurrent races and two isolation
+rejection cases all passed on PostgreSQL 17.11. See validation.md for coverage
+and limitations. The four empty source tabs and all original business-definition
+open questions above remain unchanged; they were not review findings to infer away.

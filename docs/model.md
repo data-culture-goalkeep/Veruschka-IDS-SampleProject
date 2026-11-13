@@ -89,8 +89,9 @@ source text; unknown options are not silently added or relabelled.
 Primary keys and all diagram FKs are explicit and indexed. Reference fields also
 check their list-name prefix, preventing a valid option from the wrong group.
 Source `attendance_mark` remains P/A/PL/H/L; the generated `attendance_reference_id`
-provides its FK without rewriting the raw mark. This is the only generated model
-helper column. All domain tables have nullable `source_row_id` for import lineage;
+provides its FK without rewriting the raw mark. Additional `context_*` integrity
+columns mirror parent keys, section and score limits; they are not source fields
+or inferred business values. All domain tables have nullable `source_row_id` for import lineage;
 null is permitted for invented local fixtures and later native application rows.
 
 Composite uniqueness covers staff/month, learner/batch, enrolment/instalment number,
@@ -99,15 +100,32 @@ enrolment/goal number, goal/milestone, assessment-type/rubric/criterion-name and
 assessment-event/criterion. Non-null structural components preserve the approved
 record grain. Unknown business attributes remain nullable instead of guessing.
 
-Private SECURITY INVOKER triggers check that contacts belong to the learner,
-session logs/assessments belong to the enrolment's batch, and scores match their
-event's assessment type and rubric version. Scores cannot exceed a specified
-catalogue maximum. Used criterion definitions cannot be rewritten; create a new
-rubric version instead. Parent updates also check existing dependants. Child
-checks lock relevant parents FOR SHARE to coordinate concurrent parent changes.
-These functions use a fixed pg_catalog search_path, qualified references and
-no public execution privileges. Parent update checks currently scan the related
-model joins; benchmark this rare path before larger-scale application editing.
+Composite foreign keys enforce contact ownership, enrolment/session batch context,
+ILS goals, and event/criterion rubric matching. Private SECURITY INVOKER triggers
+populate integrity context from the referenced parent, overwriting any supplied
+context. The FK checks—not the trigger's snapshot—prove that it is still current.
+Non-null context and CHECK constraints enforce section-specific ratings and score
+ceilings. A null source maximum uses an internal Infinity ceiling; a null goal
+section uses an internal empty key. Original source values remain null. These
+sentinels prevent nullable composite keys from skipping the integrity check.
+
+Parent reassignment does not silently cascade to children. A compatible change
+requires an explicit transaction: defer the context FKs, update the parent, refresh
+the affected children (e.g. SET goal_id=goal_id), then make constraints immediate
+before commit. Invalid changes fail. This replaces the original whole-model
+parent-scan trigger and is safe under PostgreSQL FK concurrency enforcement.
+
+Used criterion definitions/scoring cannot be rewritten; create a new rubric
+version instead. Source lineage and source audit timestamps/actors are explicitly
+excluded from this definition comparison, so controlled provenance updates work.
+The remaining definition-immutability existence check supports **READ COMMITTED**
+only: an actual definition/scoring UPDATE at REPEATABLE READ, SERIALIZABLE or any
+other level fails with SQLSTATE 0A000. Metadata-only updates remain allowed.
+Score writes hold SHARE on the catalogue row until commit, so a waiting READ
+COMMITTED definition update sees the committed use and fails. Two-session tests
+exercise this race. Ordinary relational FK checks support READ COMMITTED and
+REPEATABLE READ (a competing change fails with an FK/serialization error).
+All functions retain fixed pg_catalog search_path and no API execution grants.
 
 Goals apply to ILS. Review weeks are 4, 8, 12, 16, 20, 24; week 24 is the final
 IFSP review, not a new endline assessment type. Numeric SMART ratings permit 1–4;
@@ -120,8 +138,8 @@ original gross fee/subsidy, SUM of scheduled source amounts as scheduled_net_due
 net payments minus refunds, balance, credit and last payment date. No source
 net-due column exists: no new stored amount is fabricated from gross minus subsidy.
 The observed equation matches all 220 source enrolments, but its interpretation
-remains an open question. Absent obligations remain unknown rather than becoming
-zero due. `fee_instalment_balance` allocates net paid oldest due date first, then
+remains an open question. Absent obligations leave scheduled_net_due, balance and
+credit NULL, including when a payment exists. `fee_instalment_balance` allocates net paid oldest due date first, then
 instalment number/ID; null dates sort last. Excess is credit. Refunds are positive
 transactions of Refund type. No per-instalment payment provenance is claimed.
 
@@ -142,6 +160,13 @@ source timezone, file, run timestamps, status and baseline manifest.
 committed, failed or uncertain status. `source_row` retains original file/tab/sheet
 ID/row, raw values, formatted values, SHA-256, disposition and target identity.
 `validation_issue` stores warnings/errors by safe reason code and source row.
+Source-file/run identity is a composite FK. If a source row has a chunk, a second
+composite FK binds its chunk/run/sheet/first-row/last-row; a CHECK requires the
+original row to lie within those copied bounds. A trigger fills bounds from the
+actual chunk and cannot be bypassed by supplying different bounds. The FK also
+prevents checkpoint sheet/range changes that would invalidate existing rows.
+Unchunked staging rows remain permitted with null bounds; the future loader must
+assign committed chunk membership before treating a row as checkpointed.
 Every domain row links to its raw source row when imported; historical raw rows
 remain separate across runs. `created_at`/`updated_at` are source audit times;
 `recorded_at` and run timestamps are import times. They are not interchanged.

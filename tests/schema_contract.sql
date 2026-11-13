@@ -66,19 +66,19 @@ select pg_temp.expect_failure($q$insert into ids.batch_schedule(batch_schedule_i
 select pg_temp.expect_failure($q$insert into ids.batch_schedule(batch_schedule_id,batch_id,week_number,session_number) values ('DUMMY-S4','DUMMY-B1',1,4)$q$, '23514');
 
 -- Cross-table ownership and batch consistency, including parent mutations.
-select pg_temp.expect_failure($q$update ids.enrolment set supporter_contact_id='DUMMY-C2' where enrolment_id='DUMMY-E1'$q$, '23514');
-select pg_temp.expect_failure($q$update ids.family_contact set learner_id='DUMMY-L2' where contact_id='DUMMY-C1'$q$, '23514');
-select pg_temp.expect_failure($q$insert into ids.learner_session_log(learner_session_log_id,enrolment_id,batch_schedule_id) values ('DUMMY-WRONG-BATCH','DUMMY-E1','DUMMY-S3')$q$, '23514');
-select pg_temp.expect_failure($q$update ids.batch_schedule set batch_id='DUMMY-B2', week_number=2 where batch_schedule_id='DUMMY-S1'$q$, '23514');
-select pg_temp.expect_failure($q$update ids.assessment_event set supported_by_contact_id='DUMMY-C2' where assessment_event_id='DUMMY-A1'$q$, '23514');
-select pg_temp.expect_failure($q$insert into ids.criterion_score(criterion_score_id,assessment_event_id,criterion_id) values ('DUMMY-WRONG-RUBRIC','DUMMY-A1','DUMMY-CR2')$q$, '23514');
-select pg_temp.expect_failure($q$update ids.assessment_event set rubric_version='DUMMY-OTHER-RUBRIC' where assessment_event_id='DUMMY-A1'$q$, '23514');
+select pg_temp.expect_failure($q$update ids.enrolment set supporter_contact_id='DUMMY-C2' where enrolment_id='DUMMY-E1'$q$, '23503');
+select pg_temp.expect_failure($q$update ids.family_contact set learner_id='DUMMY-L2' where contact_id='DUMMY-C1'$q$, '23503');
+select pg_temp.expect_failure($q$insert into ids.learner_session_log(learner_session_log_id,enrolment_id,batch_schedule_id) values ('DUMMY-WRONG-BATCH','DUMMY-E1','DUMMY-S3')$q$, '23503');
+select pg_temp.expect_failure($q$update ids.batch_schedule set batch_id='DUMMY-B2', week_number=2 where batch_schedule_id='DUMMY-S1'$q$, '23503');
+select pg_temp.expect_failure($q$update ids.assessment_event set supported_by_contact_id='DUMMY-C2' where assessment_event_id='DUMMY-A1'$q$, '23503');
+select pg_temp.expect_failure($q$insert into ids.criterion_score(criterion_score_id,assessment_event_id,criterion_id) values ('DUMMY-WRONG-RUBRIC','DUMMY-A1','DUMMY-CR2')$q$, '23503');
+select pg_temp.expect_failure($q$update ids.assessment_event set rubric_version='DUMMY-OTHER-RUBRIC' where assessment_event_id='DUMMY-A1'$q$, '23503');
 select pg_temp.expect_failure($q$update ids.criterion_catalogue set maximum_score=4 where criterion_id='DUMMY-CR1'$q$, '23514');
 select pg_temp.expect_failure($q$update ids.criterion_score set score_value=6 where criterion_score_id='DUMMY-CS1'$q$, '23514');
 select pg_temp.expect_failure($q$update ids.goal_review set faculty_rating_score=0 where goal_review_id='DUMMY-GR1'$q$, '23514');
 select pg_temp.expect_failure($q$update ids.goal_review set milestone_week=5 where goal_review_id='DUMMY-GR1'$q$, '23514');
 select pg_temp.expect_failure($q$update ids.goal_review set ideal_seed_pathway='seed_pathway.OTHER' where goal_review_id='DUMMY-GR1'$q$, '23514');
-select pg_temp.expect_failure($q$update ids.batch set program_id='programme.SEED' where batch_id='DUMMY-B1'$q$, '23514');
+select pg_temp.expect_failure($q$update ids.batch set program_id='programme.SEED' where batch_id='DUMMY-B1'$q$, '23503');
 
 -- Fees: 100 due; 75 payment minus 5 refund; oldest obligation receives 40, next 30.
 select pg_temp.assert_true((select scheduled_net_due=100 and net_paid=70 and balance=30 and credit=0

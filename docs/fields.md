@@ -586,3 +586,19 @@ Source: `24.Reference List`; 154 rows at inspection.
 | `updated_at` | `timestamptz` | yes |  |
 | `created_by` | `text` | yes | FK → staff.staff_id |
 | `updated_by` | `text` | yes | FK → staff.staff_id |
+
+## Review-fix integrity metadata
+
+These columns mirror parent context. Do not map source values into them; triggers/generated expressions fill them.
+
+| Table | Added integrity columns | Purpose |
+|---|---|---|
+| `learner_session_log` | `attendance_reference_id text` (generated), `context_learner_id text`, `context_batch_id text` | Raw attendance FK and enrolment/session batch integrity |
+| `goal` | `context_learner_id text`, `context_batch_id text`, `context_programme_id text` (generated), `context_section_key text` (generated) | Learner/contact, batch/programme and review section integrity |
+| `goal_review` | `context_section_key text` | FK mirrors the goal section; CHECK applies its approved numeric range |
+| `assessment_event` | `context_learner_id text`, `context_batch_id text` | Learner/contact and enrolment/session batch integrity |
+| `criterion_catalogue` | `context_score_ceiling numeric` (generated) | Generated ceiling: source maximum, or Infinity only as an internal unbounded sentinel |
+| `criterion_score` | `context_assessment_type_id text`, `context_rubric_version text`, `context_score_ceiling numeric` | FKs match the event and criterion type/version/ceiling; score CHECK uses the same ceiling |
+| `ids_import.source_row` | `chunk_first_row integer`, `chunk_last_row integer` | Filled from chunk; null iff unchunked; composite FK and range CHECK bind the scope |
+
+All new domain context columns are NOT NULL; attendance_reference_id alone remains nullable when the raw attendance mark is null. Source-row chunk bounds are nullable only for unchunked staging. Original source fields, values and nullability are unchanged.
