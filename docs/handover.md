@@ -281,3 +281,125 @@ Data API exposed schemas remain public,graphql_public. Security advisor:
 28 INFO rls_enabled_no_policy findings, expected for the approved closed
 access model; zero WARN or ERROR findings. The two prior function warnings
 are absent. No automatic remediation or access-model changes were made.
+
+
+## 2026-11-13 — Trial/full load paused at first-run progress-state gate
+
+The user authorized the synthetic-data trial and full load only on
+Veruschka-IDS-SampleProject (`uzofrrrtwqjmtytrbqfr`), through the worker route
+using PR #2 commit `097b1f00bf68a97faebd02ffcb9666d34fbf8229`. They required an
+immediate stop on failed, uncertain or unexpected results and explicit approval
+after read-only reconciliation of missing/untrusted progress state.
+
+The first journal inspection reported **RECONCILIATION_REQUIRED**: there was no
+trusted first-run state. No Loader.load call or database write was performed.
+The required read-only reconciliation then completed at **21:12:18 IST**
+(15:42:18 UTC), returning **mode=first**, not recovery of an existing import.
+The database trial and full load remain paused pending the user's explicit
+approval to resume. This is not a successful load or a completed 7,747-row
+reconciliation. Do not interpret the newly provisioned local journal as approval.
+
+### Read-only findings
+
+- Worker preflight confirmed the exact allowed healthy project, expected migration
+  versions, all 28 tables with RLS, zero policies and no private-model object ACL
+  grants to PUBLIC, anon, authenticated or service_role. Exposed API schemas remain
+  public,graphql_public, excluding ids and ids_import.
+- Initial read-only inventory: every one of the 24 domain and four audit/import
+  tables had zero rows; import runs, lineage and checkpoints were all absent.
+- The trial source scope was read twice: Reference List 154, Staff 20, Partner
+  Organisation 12 and Learner Profile 215, totaling **401 distinct source rows**,
+  or 802 observations. Both snapshots matched exactly. Every tab's source
+  fingerprint matched its Stage 2 baseline, and all 401 rows transformed.
+- Loader.reconcile was invoked only with READ ONLY transactions and returned
+  `reconciled=true, mode=first`. It provisioned local first-run state outside the
+  repository. It did not insert an import-run row or any source/business data.
+- Frozen trial run: `4a5269a8-e230-4a8e-841c-8c50cf2ba31a`. Snapshot SHA-256:
+  `f07434fc0a7f7e63863bf5407a802e4ac969798a9ad6379e20bdac3fe5883be5`. No raw cells or transformed records are committed.
+- Local state is under /workspace/shared/ids-loader-state, outside the checkout.
+  Availability across environment replacement has not been established. If it
+  disappears or is untrusted, repeat the approval-gated reconciliation procedure.
+
+### Trial write accounting
+
+| Trial tab | Source rows read per pass | Load-considered | Loaded | Quarantined |
+|---|---:|---:|---:|---:|
+| 24.Reference List | 154 | 0 | 0 | 0 |
+| 23.Staff | 20 | 0 | 0 | 0 |
+| 4.Partner Organisation | 12 | 0 | 0 | 0 |
+| 7.Learner Profile | 215 | 0 | 0 | 0 |
+| Total | 401 | 0 | 0 | 0 |
+
+No bootstrap transaction, trial insertion, chunk replay, or post-load accounting
+check was attempted. Read/transformed source rows are not load-considered rows.
+
+### Full-load accounting — not started
+
+Expected counts below are the approved Stage 2 inventory, not fresh reads of the
+remaining tabs. Actual considered/loaded/quarantined counts for this attempt
+are all zero. Model Guide is documentation and is excluded from the 7,747.
+
+| Tab | Expected source rows | Load-considered | Loaded | Quarantined | Status |
+|---|---:|---:|---:|---:|---|
+| 24.Reference List | 154 | 0 | 0 | 0 | Not started |
+| 23.Staff | 20 | 0 | 0 | 0 | Not started |
+| 4.Partner Organisation | 12 | 0 | 0 | 0 | Not started |
+| 7.Learner Profile | 215 | 0 | 0 | 0 | Not started |
+| 8.Family Contact | 286 | 0 | 0 | 0 | Not started |
+| 9.Learner Sensitive Details | 215 | 0 | 0 | 0 | Not started |
+| 10.Batch | 20 | 0 | 0 | 0 | Not started |
+| 11.Enrolment | 220 | 0 | 0 | 0 | Not started |
+| 1.Mobilisation Lead | 280 | 0 | 0 | 0 | Not started |
+| 2.Lead Follow-up | 560 | 0 | 0 | 0 | Not started |
+| 3.Mobilisation Activity | 810 | 0 | 0 | 0 | Not started |
+| 5.Monthly Target | 162 | 0 | 0 | 0 | Not started |
+| 6.Report & Meeting Log | 216 | 0 | 0 | 0 | Not started |
+| 15.Standard Topic | 50 | 0 | 0 | 0 | Not started |
+| 14.Master Programme Schedule | 120 | 0 | 0 | 0 | Not started |
+| 16.Batch Schedule | 1320 | 0 | 0 | 0 | Not started |
+| 12.Fee Instalment | 660 | 0 | 0 | 0 | Not started |
+| 13.Fee Payment | 597 | 0 | 0 | 0 | Not started |
+| 21.Criterion Catalogue | 210 | 0 | 0 | 0 | Not started |
+| 17.Learner Session Log | 1620 | 0 | 0 | 0 | Not started |
+| 18.Goal | 0 | 0 | 0 | 0 | Not started |
+| 19.Goal Review | 0 | 0 | 0 | 0 | Not started |
+| 20.Assessment Event | 0 | 0 | 0 | 0 | Not started |
+| 22.Criterion Score | 0 | 0 | 0 | 0 | Not started |
+| Total | 7747 | 0 | 0 | 0 | Not started |
+
+### Verification not performed after the stop
+
+Full-load reconciliation, repeated-chunk skip verification, final per-table
+counts, final RLS/policy/grant recheck, security advisor and failure-log/quarantine
+count comparison were not run. The earlier read-only preflight results above
+are not a post-load verification. No sanitized failure entry was written because
+no load or quarantine occurred; existing failure-log tab contents were not
+rechecked in this attempt. Zero hosted data writes, failure-log writes, seed runs
+and merges occurred. The docs-only PR records this stop; it does not resume loading.
+
+
+### Stage timings and call accounting for this stopped attempt
+
+Counts distinguish orchestration calls (`functions.exec`), underlying tool
+invocations and Python-issued HTTP requests; they must not be added as if all
+were independent tool calls. Shell polls are counted separately. Durations below
+identify their clock source; blank/unmeasured timing was not reconstructed.
+
+| Stage | Elapsed seconds / clock | Orchestration | Shell | Shell poll | Environment status | Sheets reads | Local patch | GitHub writes | Supabase HTTP reads |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Initial checkout/environment inspection | Unmeasured | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+| Worker preflight + initial inventory | 4.789 / shell wall | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 4 |
+| Journal gate + source metadata | Unmeasured | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| Two source snapshot reads | 12.9 / orchestration wall | 1 | 0 | 0 | 0 | 16 | 1 | 0 | 0 |
+| Transform + read-only reconciliation | 18.373 / process monotonic | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 9 |
+| Database trial writes | Not started | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Full load | Not started | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Final post-load verification | Not started | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Documentation/report/PR | Unmeasured | 4 | 3 | 0 | 0 | 0 | 0 | 1 | 0 |
+| Total | Not derivable: some timings unmeasured | 10 | 7 | 1 | 1 | 17 | 1 | 1 | 13 |
+
+The 13 Supabase HTTP requests were read-only: two project GETs, two API-config
+GETs, two catalog-query POSTs, one inventory-query POST, and six READ ONLY
+reconciliation-query POSTs. There were no data-write requests. Documentation
+counts include the documentation PR creation. No credits were measured or
+inferred from these calls.
