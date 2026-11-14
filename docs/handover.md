@@ -281,3 +281,59 @@ Data API exposed schemas remain public,graphql_public. Security advisor:
 28 INFO rls_enabled_no_policy findings, expected for the approved closed
 access model; zero WARN or ERROR findings. The two prior function warnings
 are absent. No automatic remediation or access-model changes were made.
+
+## 2026-11-13 — Stage 4 read-only trial and SQL adapter PR
+
+User approved the exact 124-row read-only trial, deferred Reference List/Staff
+bootstrap design, 100-row maximum chunks and stop-on-change/conflict policy.
+All 124 rows transformed after adding strict text-time parsing for four schedule
+rows. Two source reads matched. There were 115 approved warning instances, zero
+final quarantine candidates, 12 stale temporal formats ignored and 168 preserved
+null fields. No sensitive values were printed or put in the failure log. All 25
+source-log tabs were verified empty; no failure-log write or database request ran.
+
+A new feature branch from main 51d0c92139ce385c0f93085d4e5a8b03185d8446 adds
+the SQL adapter, offline tests and [load-path.md](load-path.md). The source trial
+is not a hosted load or a dependency-complete FK trial. Historical exception
+annotations require baseline verification before any separately approved load.
+No migrations, grants, source files or seed were changed. No merge is authorized.
+
+## 2026-11-13 — PR #2 review fixes and synthetic-data logging limitation
+
+The planned load uses **synthetic data**. The transport is unchanged at the
+user's direction: source values appear in SQL statement text and could reach
+database error/query logs or HTTP request logs. Sanitizing Python exceptions and
+the failure log does not remove those infrastructure exposures. **Before any real
+client data is loaded, the loader must use a parameterised route and its database,
+parameter, error and request-log controls must be verified first.** This PR does
+not claim that logging controls were inspected or that the risk was eliminated.
+No hosted database request, load or merge is authorized by these fixes.
+
+Run-state handling now requires a separately provisioned persistent filesystem
+outside the repository. All workers for the same run must use the same canonical
+run-UUID state path on a filesystem supporting flock and durable fsync. State has
+a separately fsync'd started marker and generation; missing, corrupt or mismatched
+state never silently initializes. First execution is explicitly provisioned by
+read-only reconciliation and recorded as `first`; existing runs reconcile as
+`resume`. Lost state or uncertain attempts require operator-authorized read-only
+reconciliation of exact run/snapshot/checkpoint/lineage/business/warning content
+before a new Loader instance may write. The operator must establish that earlier
+requests have settled; the loader never automatically retries an uncertain write.
+
+An exclusive OS run lock is taken before journal inspection and retained through
+preflight, all chunk/finalization requests and failure handling. Attempt UUIDs
+own journal transitions, preventing another attempt from clearing in-flight state.
+Input snapshots are private recursively immutable copies before validation/hash/
+compilation, preventing mutation during preflight from changing approved output.
+
+Integration tests use a digest-pinned PostgreSQL 17.11 Docker container with no
+network, no published ports and no hosted credentials. Only invented fixtures
+are written; source rows, private snapshots and the seed script are not used.
+Coverage includes mid-chunk and deferred-bootstrap rollback, identical/changed
+replay, tampered lineage, concurrent attempts, and a real COMMIT followed by a
+simulated lost response. The pinned SQL parser is now mandatory, not skipped.
+See validation.md for final results and remaining limits.
+
+Final fix validation: 53 tests passed, zero skips (45 unit/parser/control,
+eight PostgreSQL integration). Whitespace checks passed and the disposable
+container was removed. Hosted API behavior/log controls remain unverified.

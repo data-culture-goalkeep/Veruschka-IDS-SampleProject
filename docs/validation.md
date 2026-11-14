@@ -113,3 +113,46 @@ Hosted limits remain: the function revoke is only in an unapplied SQL file; no
 claim is made that live advisor warnings have cleared. Hosted migration history,
 API exposure and platform behavior must be verified only during a separately
 approved application. No real source records were used in these local tests.
+
+## 2026-11-13 — PR #2 fixes: local integration validation and logging boundary
+
+The planned load uses **synthetic data**. Source values are embedded in SQL
+statement text and **could reach database or request logs**. The transport was
+intentionally not changed. For **real client data**, the loader must first use a
+**parameterised route with database, parameter, error and request-log controls
+verified**. Client-side error sanitization alone is insufficient. No hosted log
+configuration was inspected and no real-data deployment clearance is claimed.
+
+The current loader suite is run with:
+
+```sh
+python -m pip install --target work/test-deps --no-cache-dir -r tests/requirements-loader-test.txt
+PYTHONPATH=work/test-deps python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Parser import/version mismatch now fails test collection. A negative test starts
+an isolated Python without site packages to confirm missing-parser failure.
+Unit regressions cover total/partial state loss, corruption, mismatched generations,
+attempt ownership, same-process and cross-process exclusion, and mutation during
+preflight. Recursively frozen snapshots are used for all validation and SQL.
+
+Eight real PostgreSQL integration cases use a disposable, network-isolated,
+digest-pinned 17.11 container. They check rollback of data/lineage/checkpoints/run
+registration on mid-chunk errors and deferred bootstrap failures, a successful
+174-row bootstrap preserving audit actors, duplicate-free replay, changed chunk
+rejection at both Python and SQL layers, tampered-lineage rejection, exclusive
+concurrent execution, and committed-but-lost-response recovery. Recovery verifies
+data through READ ONLY transactions; reconciliation itself performs zero database
+writes and does not automatically resume loading.
+
+No source snapshot or seed script is used by these tests. The legacy
+scripts/validate_local.py harness invokes seed_dummy.py, so it is excluded from
+this no-seed stage; its earlier Stage 3 results remain historical evidence, not a
+claim of rerun. No hosted request, migration, grant, data load or merge occurred.
+Local PostgreSQL tests do not establish hosted Management API response semantics
+or infrastructure log privacy. The persistent state filesystem and shared locking
+path must be provisioned before a future approved application.
+
+Final result for this revision: **53 tests passed** (45 unit/parser/control tests
+and eight PostgreSQL integration tests); zero skips. `git diff --check` passed.
+The throwaway container and per-case databases were removed after testing.
