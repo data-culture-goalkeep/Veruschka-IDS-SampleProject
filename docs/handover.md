@@ -663,3 +663,22 @@ Renamed `20261114102844_align_goal_review_scales.sql` with git mv to
 `20261114104958_align_goal_review_scales.sql`; SQL SHA-256 is byte-identical
 (`e5b4ede04173629a4b9167787152abc893404ca224e340aed86f5a501df5ae6e`).
 Updated active manifest required migration and documentation references.
+
+2026-11-14 hosted migration verification (worker route, allowed project only):
+all 28 tables exist and remain empty; RLS on 28/28, zero policies and zero
+table/view/sequence/function grants to PUBLIC, anon, authenticated or
+service_role. Only the intended goal-review CHECK changed; SMART lower bound
+1 and Functional/Hospitality lower bound 0 are preserved. Data API remains
+public,graphql_public. Advisor has zero WARN/ERROR and 28 expected INFO
+rls_enabled_no_policy findings. Migration preflight: 25.622 s, six worker
+requests; application/history: 5.717 s, two requests; post-migration checks:
+11.572 s, six requests.
+
+Fresh source preflight: 90,319/90,319 rows transformed, zero schema/rule
+violations and zero planned quarantines. All 24 tab hashes match the earlier
+independently read complete snapshot and active manifest. Evaluated 76 CHECKs
+and 300 source constraints; retain 471/61/328 approved warnings. Fresh read
+and private materialization: 139.309 s, one metadata and 64 range requests.
+Transformation/rule check: 12.754 s, no service requests. Failure-log precheck:
+one metadata and one cell-read request; all 25 source tabs empty with headers
+intact. Loader first-run reconciliation and loading remain pending.
