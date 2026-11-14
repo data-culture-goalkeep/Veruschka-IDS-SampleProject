@@ -607,3 +607,101 @@ must follow explicit read-only reconciliation rather than blind replay.
 
 Documentation publication: two shell tool invocations for preparation/switch and
 commit/push, plus one GitHub PR-metadata update; elapsed time unmeasured.
+
+
+## 2026-11-14 — Regenerated workbook reload stopped at inspection gate
+
+The user authorized a worker-route reload of the new synthetic workbook
+`1ZNF0oGXt06kX5ezohN1HHO4--Z9fsiDVm-D7JXlEooc` into the allowed project
+`uzofrrrtwqjmtytrbqfr` only, with a hard stop for schema mismatches or more
+than 1% quarantine candidates in any tab. This section records a blocked
+read-only inspection, not a reload or complete workbook validation.
+
+Preflight used latest main `c3eacf54096941e3c0c3e1a4386980a09b2d98f0`.
+The loader entered main with PR #2, commit `1669f8954bf64314e52cb2ebab918fc4665a137d`;
+its existing source allowlist/row manifest still targets the first workbook.
+A new versioned source manifest and first-run reconciliation were not created
+because inspection hit the mandatory stop gate first. No allowlist was bypassed.
+
+The worker confirmed Veruschka-IDS-SampleProject is ACTIVE_HEALTHY and all
+28 ids/ids_import tables are empty. Migration history remains:
+20261113125204 private_ids_schema and
+20261113125216 review_integrity_and_privacy_fixes.
+RLS remains enabled on all 28, with zero policies and no private-model object
+grants to PUBLIC, anon, authenticated or service_role. The read-only advisor
+reported zero WARN/ERROR and 28 expected RLS-with-no-policy INFO findings.
+
+### Stop finding
+
+The first 250 rows inspected in 19.Goal Review contain **60 distinct invalid
+rows**, with **102 field-level rating violations**. The source Goal rows were
+joined in memory to determine each review's section. The approved schema limits
+Functional Learning and Hospitality faculty/family scores to 0–3; scores of 4
+appear in the new source.
+
+The Goal Review grid has 4,457 rows. After its two title/header rows, there
+can be **at most 4,455 data rows**. Therefore the 60 already identified invalid
+rows alone represent at least **1.3468%** of that tab. This lower bound proves
+the stop threshold is exceeded without claiming that grid size is the actual
+record count. Full tab counting and full violation enumeration were stopped.
+
+Affected worksheet row references found so far:
+13, 14, 19, 20, 31, 32, 37, 38, 50, 54, 55, 56, 60, 61, 62, 85, 86, 91, 92, 103, 104, 109, 110, 122, 127, 128, 132, 133, 134, 156, 157, 158, 162, 163, 164, 170, 175, 176, 180, 181, 182, 194, 199, 200, 205, 206, 224, 227, 228, 229, 230, 233, 234, 235, 236, 242, 246, 247, 248, 252.
+
+No ratings were clamped, remapped or silently repaired. The source workbook
+and the database were not changed. These are quarantine candidates only:
+nothing was staged or quarantined in the database or failure log.
+
+### Scope actually inspected
+
+Metadata confirms 25 source tabs. The expected header ranges in all 24
+data/reference tabs match the existing manifest. This is not a complete
+schema/value audit, including columns outside the inspected header ranges.
+
+| Source tab | Distinct data rows inspected | Completeness |
+|---|---:|---|
+| 18.Goal | 100 | Partial |
+| 19.Goal Review | 250 | Partial; stop threshold proven |
+| 20.Assessment Event | 100 | Partial |
+| 21.Criterion Catalogue | 210 | Bounded read; full source inventory not certified |
+| 24.Reference List | 165 | Bounded read; 11 new options observed |
+| Total | 825 | Partial workbook inspection |
+
+The 11 additional observed Reference List IDs are:
+assessment_stage.END; criterion_rating.0, criterion_rating.1,
+criterion_rating.2, criterion_rating.5; faculty_rating.NEEDS_SUPPORT,
+faculty_rating.CONSISTENT, faculty_rating.INDEPENDENT;
+family_rating.RARELY, family_rating.USUALLY, family_rating.ALWAYS.
+Adding dropdown options does not override the numeric CHECK limits.
+
+Workbook tab gids differ from the previous file and require a fresh manifest;
+business-ID preservation and all uniqueness/FK/rubric/batch/contact checks were
+not fully verified. No final row counts are inferred from grid dimensions.
+
+### Load/reconciliation outcome and limits
+
+All 28 destination tables remain empty: considered-for-load=0, loaded=0,
+quarantined=0, import runs=0, lineage=0, checkpoints=0. No first-run state was
+provisioned and no new import version tag was activated. No reload, seed,
+failure-log edit, schema/grant change or merge occurred. The complete per-tab
+load reconciliation and post-load verification are not applicable.
+
+IQ, height and weight were not loaded or modified. They remain an open
+sensitivity question for handover: how should these synthetic measurements be
+handled, and what consent/access/retention rules would apply to real client data?
+If loading is approved later, values must be retained as supplied, not inferred.
+
+The read-only stage used seven worker HTTP requests (one project GET,
+five database-query reads and one security-advisor GET), four Sheets reads
+(metadata, headers and two bounded rule probes), four shell invocations and
+one shell poll. Environment status was read once. One private scratch patch
+succeeded; a later patch to materialize the extended probe failed validation
+before changing that file and was not retried. The stop-threshold calculation
+used already-read in-memory data; no additional source reads followed it.
+Stage elapsed timings were not instrumented and are **unmeasured**. No credits
+are inferred from requests or tool calls. Documentation publication calls are
+separate from these inspection counts.
+
+The user must decide whether to correct the source scores, explicitly approve
+a revised rating model through reviewed schema changes, or explicitly approve
+a quarantine rate above the specified threshold. Until then, do not load.
