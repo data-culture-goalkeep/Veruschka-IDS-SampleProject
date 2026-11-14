@@ -235,3 +235,152 @@ GETs, two catalog-query POSTs, one inventory-query POST, and six READ ONLY
 reconciliation-query POSTs. There were no data-write requests. Documentation
 counts include the documentation PR creation. No credits were measured or
 inferred from these calls.
+
+
+## 2026-11-14 — Approved database trial and full synthetic-data load completed
+
+Recorded 2026-11-14 13:38:22 IST. The user explicitly approved resuming the reconciled first-run
+state and continuing directly from a successful database trial into the full load.
+Only Veruschka-IDS-SampleProject (`uzofrrrtwqjmtytrbqfr`) was accessed, on the
+worker route, using the unchanged loader at PR #2 commit
+`097b1f00bf68a97faebd02ffcb9666d34fbf8229`. No merge, seed, Auth-account creation,
+source-sheet edit, schema/access change or transport change was performed.
+
+The saved journal, marker and run UUID survived the date boundary. Fresh source
+reads matched the frozen trial snapshot and the loader's explicit read-only
+reconciliation again returned `mode=first` before the first data write. There
+was no lost-state recovery, failed/uncertain data write, blind retry or route
+change in this execution. The remainder used a separately identified run,
+provisioned by explicit read-only reconciliation before loading.
+
+### Database trial
+
+Reference List and Staff were inserted together in one deferred transaction;
+constraints were made immediate before commit, preserving source audit actors.
+Partner Organisation and Learner Profile followed.
+
+| Trial source | Considered | Loaded | Quarantined | Committed checkpoints |
+|---|---:|---:|---:|---:|
+| Reference List | 154 | 154 | 0 | 2 |
+| Staff | 20 | 20 | 0 | 1 |
+| Partner Organisation | 12 | 12 | 0 | 1 |
+| Learner Profile | 215 | 215 | 0 | 3 |
+| Total | 401 | 401 | 0 | 7 |
+
+Each trial tab's business count, source-row lineage join and checkpoints matched.
+The exact Partner Organisation chunk was repeated through the pinned adapter.
+Its committed-checkpoint branch verified the existing payload/records/lineage;
+before/after table, lineage and checkpoint counts were identical. No duplicate
+records or extra checkpoints were added.
+
+Trial run: `4a5269a8-e230-4a8e-841c-8c50cf2ba31a`. Full remainder run: `b9388b9c-946c-489e-8da6-a45764562a63`. Both are now
+`completed`. These identifiers contain no source person values.
+
+### Final reconciliation, all approved data/reference tabs
+
+Both source reads matched for all 7,747 distinct source rows (15,494 total row
+observations). Each populated tab's fingerprint matched the approved Stage 2
+baseline; headers and emptiness were checked for the four empty sources. Source
+values were not repaired or inferred. Every tab was reconciled before proceeding
+to the next, in the approved dependency order.
+
+| Source tab | Considered | Loaded | Quarantined | Domain table rows | Joined lineage rows | Committed checkpoints |
+|---|---:|---:|---:|---:|---:|---:|
+| 24.Reference List | 154 | 154 | 0 | 154 | 154 | 2 |
+| 23.Staff | 20 | 20 | 0 | 20 | 20 | 1 |
+| 4.Partner Organisation | 12 | 12 | 0 | 12 | 12 | 1 |
+| 7.Learner Profile | 215 | 215 | 0 | 215 | 215 | 3 |
+| 8.Family Contact | 286 | 286 | 0 | 286 | 286 | 3 |
+| 9.Learner Sensitive Details | 215 | 215 | 0 | 215 | 215 | 3 |
+| 10.Batch | 20 | 20 | 0 | 20 | 20 | 1 |
+| 11.Enrolment | 220 | 220 | 0 | 220 | 220 | 3 |
+| 1.Mobilisation Lead | 280 | 280 | 0 | 280 | 280 | 3 |
+| 2.Lead Follow-up | 560 | 560 | 0 | 560 | 560 | 6 |
+| 3.Mobilisation Activity | 810 | 810 | 0 | 810 | 810 | 9 |
+| 5.Monthly Target | 162 | 162 | 0 | 162 | 162 | 2 |
+| 6.Report & Meeting Log | 216 | 216 | 0 | 216 | 216 | 3 |
+| 15.Standard Topic | 50 | 50 | 0 | 50 | 50 | 1 |
+| 14.Master Programme Schedule | 120 | 120 | 0 | 120 | 120 | 2 |
+| 16.Batch Schedule | 1320 | 1320 | 0 | 1320 | 1320 | 14 |
+| 12.Fee Instalment | 660 | 660 | 0 | 660 | 660 | 7 |
+| 13.Fee Payment | 597 | 597 | 0 | 597 | 597 | 6 |
+| 21.Criterion Catalogue | 210 | 210 | 0 | 210 | 210 | 3 |
+| 17.Learner Session Log | 1620 | 1620 | 0 | 1620 | 1620 | 17 |
+| 18.Goal | 0 | 0 | 0 | 0 | 0 | 0 |
+| 19.Goal Review | 0 | 0 | 0 | 0 | 0 | 0 |
+| 20.Assessment Event | 0 | 0 | 0 | 0 | 0 | 0 |
+| 22.Criterion Score | 0 | 0 | 0 | 0 | 0 | 0 |
+| Total | 7747 | 7747 | 0 | 7747 | 7747 | 90 |
+
+`loaded + quarantined = considered` holds per tab and in total. There are no
+staging-only or unclassified source rows and no error-severity validation issues.
+The four header-only source tables remain empty. No Model Guide records were
+created. Source audit fields and all raw/formatted lineage remain private.
+
+### Security and failure-log verification
+
+- ids: 24 tables, RLS enabled on all 24. ids_import: four tables, RLS enabled
+  on all four. Zero policies in both schemas.
+- No table/view/sequence/function ACL grants in these private schemas to PUBLIC,
+  anon, authenticated or service_role. No grants were introduced by the load.
+- Both fee views retain security_invoker=true. Data API exposes only
+  public,graphql_public, excluding ids and ids_import.
+- Security advisor: zero WARN/ERROR findings; 28 INFO rls_enabled_no_policy
+  findings, expected for the explicitly approved closed-access model.
+- All 90 checkpoints are committed; maximum range is 100 rows. Both runs
+  completed and all 7,747 source rows are classified loaded.
+- Failure log: all 25 source-named tabs were read before and after loading and
+  have zero failure entries, matching zero quarantines in every source. No
+  failure-log write was needed; Scope notes was unchanged. No sensitive values
+  were printed, put in the failure log or committed to Git.
+
+Approved warning issues were retained without quarantine: 61 weekly-check
+exceptions, 44 logs on Holiday/Cancelled sessions, 61 non-delivered sessions
+with actual dates, three MOU-signed rows lacking dates and three MOU-date rows
+without signed status. Total: 172 warning records, zero error records. These
+are the approved source-audit annotations, not silent business-rule repairs.
+
+### Measured stage timings and request counts
+
+| Stage | Seconds / clock | Supabase HTTP requests | Google Sheets reads |
+|---|---|---:|---:|
+| Initial setup | Unmeasured | 0 | 0 |
+| Trial source validation, two reads | 15.019 / orchestration wall, including metadata setup | 0 | 17 |
+| Failure-log precheck | Unmeasured | 0 | 2 |
+| Trial, including read-only recheck, bootstrap, per-tab accounting and replay | 52.517 / process monotonic | 24 | 0 |
+| Remaining source validation, two reads | 168.144 / orchestration wall | 0 | 122 |
+| Full-run initialization, loading and per-tab accounting | 548.065 / process monotonic | 191 | 0 |
+| Final database/security verification | 7.330 / process monotonic | 6 | 0 |
+| Final failure-log check | Unmeasured | 0 | 1 |
+| Total measured service requests | Durations are not an end-to-end total | 221 | 142 |
+
+The 221 Supabase requests comprise 91 data/finalization/replay transactions and
+130 read-only requests. Of the 91, 88 are chunk-group transactions (including
+the atomic three-checkpoint bootstrap), two finalize the runs, and one is the
+verified no-duplicate replay. The 130 reads comprise 90 reconciliation queries,
+23 accounting/verification queries, five project GETs, six API-config GETs,
+five catalog reads and one advisor GET. No credits were measured or inferred.
+
+Tool invocations are counted separately from HTTP requests within shell
+processes. Setup: two shell calls and one environment-status call. Trial:
+one execution shell and two polls. Full source manifest: one shell. Full-run
+execution: one shell and 12 polls. Full-run monitoring: two
+shell reads; verification preparation: one shell; private-file permissions: one
+shell. Final database verification: one shell and one poll. Local snapshot
+materialization/audit persistence: four patch-tool calls. Google metadata/cell
+reads total 142, as above. Documentation preparation/commit/push and PR update
+are recorded separately below; helper/setup/documentation timings were not
+measured. Orchestration wrappers are not added to underlying invocation counts.
+
+### Remaining limits
+
+This was the approved **synthetic** dataset. Source values appear in SQL text
+and may reach database/request logs; client-side sanitization is not a server-log
+privacy guarantee. Real client data still requires a parameterised route and
+verified database/parameter/error/request-log controls before loading. Those
+controls were not inspected or changed. Local state durability across an
+environment replacement is not established; any future missing/untrusted state
+must follow explicit read-only reconciliation rather than blind replay.
+
+Documentation publication: two shell tool invocations for preparation/switch and
+commit/push, plus one GitHub PR-metadata update; elapsed time unmeasured.
