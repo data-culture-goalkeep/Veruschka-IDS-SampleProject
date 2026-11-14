@@ -152,5 +152,16 @@
   {"reference_value_id": "source_type.AWARENESS_CAMPAIGN", "list_name": "source_type", "display_label": "Awareness Campaign", "sort_order": 9, "is_active": true},
   {"reference_value_id": "source_type.OTHER", "list_name": "source_type", "display_label": "Other", "sort_order": 10, "is_active": true},
   {"reference_value_id": "staff_type.INTERNAL_STAFF", "list_name": "staff_type", "display_label": "Internal staff", "sort_order": 1, "is_active": true},
-  {"reference_value_id": "staff_type.EXTERNAL_FACULTY", "list_name": "staff_type", "display_label": "External faculty", "sort_order": 2, "is_active": true}
+  {"reference_value_id": "staff_type.EXTERNAL_FACULTY", "list_name": "staff_type", "display_label": "External faculty", "sort_order": 2, "is_active": true},
+  {"reference_value_id": "assessment_stage.END", "list_name": "assessment_stage", "display_label": "End", "sort_order": 3, "is_active": true},
+  {"reference_value_id": "criterion_rating.0", "list_name": "criterion_rating", "display_label": "0", "sort_order": 1, "is_active": true},
+  {"reference_value_id": "criterion_rating.1", "list_name": "criterion_rating", "display_label": "1", "sort_order": 2, "is_active": true},
+  {"reference_value_id": "criterion_rating.2", "list_name": "criterion_rating", "display_label": "2", "sort_order": 3, "is_active": true},
+  {"reference_value_id": "criterion_rating.5", "list_name": "criterion_rating", "display_label": "5", "sort_order": 6, "is_active": true},
+  {"reference_value_id": "faculty_rating.NEEDS_SUPPORT", "list_name": "faculty_rating", "display_label": "Needs support", "sort_order": 1, "is_active": true},
+  {"reference_value_id": "faculty_rating.CONSISTENT", "list_name": "faculty_rating", "display_label": "Consistent", "sort_order": 4, "is_active": true},
+  {"reference_value_id": "faculty_rating.INDEPENDENT", "list_name": "faculty_rating", "display_label": "Independent", "sort_order": 5, "is_active": true},
+  {"reference_value_id": "family_rating.RARELY", "list_name": "family_rating", "display_label": "Rarely", "sort_order": 1, "is_active": true},
+  {"reference_value_id": "family_rating.USUALLY", "list_name": "family_rating", "display_label": "Usually", "sort_order": 4, "is_active": true},
+  {"reference_value_id": "family_rating.ALWAYS", "list_name": "family_rating", "display_label": "Always", "sort_order": 5, "is_active": true}
 ]

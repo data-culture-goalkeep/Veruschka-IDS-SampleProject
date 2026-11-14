@@ -60,7 +60,10 @@ class PostgreSQLLoaderTests(unittest.TestCase):
             def setup(sql):run(cls.command+['-d','ids_template'],sql)
             setup((ROOT/'tests/supabase_compat.sql').read_text())
             for migration in sorted((ROOT/'supabase/migrations').glob('*.sql')):setup(migration.read_text())
-            setup("CREATE SCHEMA supabase_migrations; CREATE TABLE supabase_migrations.schema_migrations(version text PRIMARY KEY,name text); INSERT INTO supabase_migrations.schema_migrations VALUES ('20261113125204','private_ids_schema'),('20261113125216','review_integrity_and_privacy_fixes');")
+            setup("CREATE SCHEMA supabase_migrations; CREATE TABLE supabase_migrations.schema_migrations(version text PRIMARY KEY,name text);")
+            for migration in sorted((ROOT/'supabase/migrations').glob('*.sql')):
+                version,name=migration.stem.split('_',1)
+                setup(f"INSERT INTO supabase_migrations.schema_migrations VALUES ('{version}','{name}');")
         except BaseException:
             run(DOCKER+['rm','-f',cls.name],check=False);raise
     @classmethod
@@ -97,13 +100,38 @@ class PostgreSQLLoaderTests(unittest.TestCase):
                 cells=[{'userEnteredValue':{'stringValue':values[h.split(' (')[0]]}} if h.split(' (')[0] in values else {} for h in L.TABS[tab]['source_headers']]
                 result.append(L.transform(tab,n,cells,L.TABS[tab]['source_headers']))
         return result
+    def test_goal_review_new_boundaries_preserve_lower_limits(self):
+        sections={'SMART_GOALS':1,'FUNCTIONAL_LEARNING':0,'HOSPITALITY':0}
+        self.sql("INSERT INTO ids.reference_list(reference_value_id,list_name,display_label) VALUES ('programme.ILS','programme','Synthetic ILS'),('goal_section.SMART_GOALS','goal_section','Synthetic SMART'),('goal_section.FUNCTIONAL_LEARNING','goal_section','Synthetic Functional'),('goal_section.HOSPITALITY','goal_section','Synthetic Hospitality'); INSERT INTO ids.learner_profile(learner_id) VALUES ('learner'); INSERT INTO ids.batch(batch_id,program_id) VALUES ('batch','programme.ILS'); INSERT INTO ids.enrolment(enrolment_id,learner_id,batch_id) VALUES ('enrolment','learner','batch');")
+        for n,(section,minimum) in enumerate(sections.items(),1):
+            self.sql(f"INSERT INTO ids.goal(goal_id,enrolment_id,goal_number,goal_section_id) VALUES ('goal{n}','enrolment',{n},'goal_section.{section}'); INSERT INTO ids.goal_review(goal_review_id,goal_id,milestone_week) VALUES ('review{n}','goal{n}',24);")
+            for column in ('faculty_rating_score','family_rating_score'):
+                for score in (minimum,5):
+                    self.sql(f"UPDATE ids.goal_review SET {column}={score} WHERE goal_review_id='review{n}';")
+                for score in (minimum-1,5.01,6):
+                    with self.assertRaises(RuntimeError):
+                        self.sql(f"UPDATE ids.goal_review SET {column}={score} WHERE goal_review_id='review{n}';")
+                self.assertEqual(self.sql(f"SELECT {column} FROM ids.goal_review WHERE goal_review_id='review{n}';").strip(),'5')
+                self.sql(f"UPDATE ids.goal_review SET {column}=NULL WHERE goal_review_id='review{n}';")
+
+    def test_month_conversion_database_and_raw_lineage(self):
+        self.sql("INSERT INTO ids.staff(staff_id) VALUES ('fixture_staff_id3');")
+        row=fixture();headers=L.TABS[row['tab']]['source_headers']
+        cells=[{'userEnteredValue':v} for v in row['raw']]
+        index=next(i for i,h in enumerate(headers) if h.split(' (')[0]=='month')
+        cells[index]={'userEnteredValue':{'stringValue':'2026-11'}}
+        rows=[L.transform(row['tab'],3,cells,headers)]
+        self.prepare(rows).load(rows,copy.deepcopy(rows))
+        self.assertEqual(self.sql('SELECT month FROM ids.monthly_target;').strip(),'2026-11-01')
+        self.assertEqual(self.sql(f"SELECT raw_values->{index}->>'stringValue' FROM ids_import.source_row;").strip(),'2026-11')
+
     def test_mid_chunk_error_rolls_back_everything(self):
         rows=self.rows();rows[1]['raw'][0]=copy.deepcopy(rows[0]['raw'][0]);rows[1]['record']['partner_organisation_id']=rows[0]['record']['partner_organisation_id']
         loader=self.prepare(rows)
         with self.assertRaises(L.StopLoad):loader.load(rows,copy.deepcopy(rows))
         self.assertEqual(self.counts(),[0,0,0]);self.assertEqual(self.scalar('SELECT count(*) FROM ids_import.import_run'),0)
         self.assertEqual(self.worker.writes,1);self.assertEqual(self.state()['state'],'in_flight')
-    def test_deferred_bootstrap_failure_rolls_back_all_174_rows(self):
+    def test_deferred_bootstrap_failure_rolls_back_all_185_rows(self):
         rows=self.bootstrap(invalid=True);loader=self.prepare(rows)
         with self.assertRaises(L.StopLoad):loader.load(rows,copy.deepcopy(rows))
         for t in ('ids.reference_list','ids.staff','ids_import.source_row','ids_import.import_chunk','ids_import.import_run'):
@@ -111,9 +139,9 @@ class PostgreSQLLoaderTests(unittest.TestCase):
         self.assertEqual(self.worker.writes,1)
     def test_bootstrap_preserves_audit_cycle(self):
         rows=self.bootstrap();loader=self.prepare(rows);loader.load(rows,copy.deepcopy(rows))
-        self.assertEqual(self.scalar('SELECT count(*) FROM ids.reference_list'),154)
+        self.assertEqual(self.scalar('SELECT count(*) FROM ids.reference_list'),165)
         self.assertEqual(self.scalar('SELECT count(*) FROM ids.staff'),20)
-        self.assertEqual(self.scalar("SELECT count(*) FROM ids.reference_list WHERE created_by='SYNTH_STAFF_3' AND updated_by='SYNTH_STAFF_3'"),154)
+        self.assertEqual(self.scalar("SELECT count(*) FROM ids.reference_list WHERE created_by='SYNTH_STAFF_3' AND updated_by='SYNTH_STAFF_3'"),165)
     def test_identical_replay_adds_no_records(self):
         rows=self.rows();self.prepare(rows).load(rows,copy.deepcopy(rows));before=self.counts()
         self.loader(rows).load(rows,copy.deepcopy(rows));self.assertEqual(self.counts(),before)

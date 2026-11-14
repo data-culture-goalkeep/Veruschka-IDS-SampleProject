@@ -45,7 +45,7 @@ select pg_temp.assert_true(not exists (
   where n.nspname in ('ids','ids_import') and fk.contype='f'
   and not exists (select 1 from pg_index ix where ix.indrelid=fk.conrelid and ix.indisvalid
     and array(select ix.indkey[k] from generate_series(0,cardinality(fk.conkey)-1) k) = fk.conkey)), 'FK indexes exist');
-select pg_temp.assert_true((select count(*)=154 from ids.reference_list), '154 authoritative options');
+select pg_temp.assert_true((select count(*)=165 from ids.reference_list), '165 authoritative options');
 select pg_temp.assert_true((select count(distinct list_name)=52 from ids.reference_list), '52 authoritative lists');
 select pg_temp.assert_true((select is_nullable='NO' from information_schema.columns
   where table_schema='ids' and table_name='learner_sensitive_details' and column_name='aadhaar_number'), 'Aadhaar mandatory');

@@ -24,12 +24,15 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = 'uzofrrrtwqjmtytrbqfr'
-SOURCE = '1oaKtbiklzsDqS02Y4kXmu9BXMzdHxBEJVsirt91VSGQ'
+SOURCE = '1ZNF0oGXt06kX5ezohN1HHO4--Z9fsiDVm-D7JXlEooc'
 MAX_ROWS = 100
 MAX_BYTES = 512_000
 ORDER = [24, 23, 4, 7, 8, 9, 10, 11, 1, 2, 3, 5, 6, 15, 14, 16, 12, 13, 21, 17, 18, 19, 20, 22]
 SPEC = json.loads((ROOT / 'docs/model-spec.json').read_text())
-AUDIT = json.loads((ROOT / 'docs/source-audit.json').read_text())
+AUDIT = json.loads((ROOT / 'docs/source-audit-v2.json').read_text())
+SOURCE_VERSION = AUDIT['version']
+assert SOURCE == AUDIT['source_file_id']
+REQUIRED_MIGRATIONS = tuple(AUDIT['required_migrations'])
 TABLES = {t['source_tab']: t for t in SPEC['tables']}
 TABS = {t['tab']: t for t in AUDIT['tabs']}
 CODES = {'SCOPE_MISMATCH', 'NOT_APPROVED', 'HEADER_CHANGED', 'ROW_INVALID',
@@ -144,7 +147,15 @@ def transform(tab, row, cells, headers):
     for header, cell in zip(headers, cells):
         name = header.split(' (')[0]
         if name not in fields: raise StopLoad('HEADER_CHANGED')
-        record[name] = parse_cell(cell, fields[name])
+        if tab == '5.Monthly Target' and name == 'month':
+            value = cell.get('userEnteredValue', {})
+            if 'stringValue' in value:
+                text = value['stringValue']
+                if not re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', text): raise StopLoad('TYPE_INVALID')
+                try: record[name] = datetime.strptime(text+'-01', '%Y-%m-%d').date().isoformat()
+                except ValueError: raise StopLoad('TYPE_INVALID') from None
+            else: record[name] = parse_cell(cell, fields[name])
+        else: record[name] = parse_cell(cell, fields[name])
     for name, field in fields.items():
         if name not in record:
             if not field['nullable']: raise StopLoad('REQUIRED_VALUE')
@@ -217,10 +228,11 @@ class Worker:
         if {'ids', 'ids_import'} & {x.strip() for x in c.get('db_schema', '').split(',')}:
             raise StopLoad('PREFLIGHT_FAILED')
         if not c.get('db_schema'): raise StopLoad('PREFLIGHT_FAILED')
-        check = self.query("""SELECT (
+        versions = ','.join(literal(v) for v in REQUIRED_MIGRATIONS)
+        check = self.query(f"""SELECT (
           (SELECT count(*)=28 AND bool_and(c.relrowsecurity) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('ids','ids_import') AND c.relkind='r')
           AND NOT EXISTS(SELECT 1 FROM pg_policies WHERE schemaname IN ('ids','ids_import'))
-          AND (SELECT count(*)=2 FROM supabase_migrations.schema_migrations WHERE version IN ('20261113125204','20261113125216'))
+          AND (SELECT count(*)={len(REQUIRED_MIGRATIONS)} FROM supabase_migrations.schema_migrations WHERE version IN ({versions}))
           AND NOT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault(CASE WHEN c.relkind='S' THEN 'S'::\"char\" ELSE 'r'::\"char\" END,c.relowner))) a WHERE n.nspname IN ('ids','ids_import') AND c.relkind IN ('r','p','v','m','S','f') AND (a.grantee=0 OR a.grantee IN(SELECT oid FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role'))))
           AND NOT EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE n.nspname IN ('ids','ids_import') AND (a.grantee=0 OR a.grantee IN(SELECT oid FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role'))))
         ) AS safe;""")
@@ -340,13 +352,13 @@ class Loader:
 
     def _run_guard(self, create=False):
         a = self.approval
-        scope = {'ranges': a.ranges, 'snapshot_hash': a.snapshot_hash, 'loader_version': 1}
+        scope = {'ranges': a.ranges, 'snapshot_hash': a.snapshot_hash, 'loader_version': 2, 'source_version': SOURCE_VERSION}
         scope_sql = json_sql(scope)
         rid = literal(a.run_id) + '::uuid'
         sql = ''
         if create:
-            sql += (f"INSERT INTO ids_import.import_run(import_run_id,project_ref,source_file_id,approved_scope,source_timezone,source_manifest,status) VALUES ({rid},{literal(PROJECT)},{literal(SOURCE)},{scope_sql},'Asia/Kolkata',{json_sql({'snapshot_hash':a.snapshot_hash})},'running') ON CONFLICT(import_run_id) DO NOTHING;\n")
-        sql += (f"IF NOT EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid} AND project_ref={literal(PROJECT)} AND source_file_id={literal(SOURCE)} AND approved_scope={scope_sql} AND source_timezone='Asia/Kolkata' AND source_manifest={json_sql({'snapshot_hash':a.snapshot_hash})} AND status IN ('running','completed')) THEN RAISE EXCEPTION 'RUN_CONFLICT'; END IF;\n")
+            sql += (f"INSERT INTO ids_import.import_run(import_run_id,project_ref,source_file_id,approved_scope,source_timezone,source_manifest,status) VALUES ({rid},{literal(PROJECT)},{literal(SOURCE)},{scope_sql},'Asia/Kolkata',{json_sql({'snapshot_hash':a.snapshot_hash,'source_version':SOURCE_VERSION})},'running') ON CONFLICT(import_run_id) DO NOTHING;\n")
+        sql += (f"IF NOT EXISTS(SELECT 1 FROM ids_import.import_run WHERE import_run_id={rid} AND project_ref={literal(PROJECT)} AND source_file_id={literal(SOURCE)} AND approved_scope={scope_sql} AND source_timezone='Asia/Kolkata' AND source_manifest={json_sql({'snapshot_hash':a.snapshot_hash,'source_version':SOURCE_VERSION})} AND status IN ('running','completed')) THEN RAISE EXCEPTION 'RUN_CONFLICT'; END IF;\n")
         return sql
 
     def _chunk_sql(self, rows, read_only=False):

@@ -128,8 +128,8 @@ REPEATABLE READ (a competing change fails with an FK/serialization error).
 All functions retain fixed pg_catalog search_path and no API execution grants.
 
 Goals apply to ILS. Review weeks are 4, 8, 12, 16, 20, 24; week 24 is the final
-IFSP review, not a new endline assessment type. Numeric SMART ratings permit 1–4;
-Functional/Hospitality permit 0–3; null is unassessed. Other sections' score
+IFSP review, not a new endline assessment type. Numeric SMART ratings permit 1–5;
+Functional/Hospitality permit 0–5; null is unassessed. Other sections' score
 semantics remain open. SEED Other requires explanatory text. No calculation maps
 text ratings to numeric scores or invents weighting rules.
 
@@ -145,7 +145,7 @@ transactions of Refund type. No per-instalment payment provenance is claimed.
 
 ## Authoritative reference options
 
-[config/reference-options.json](../config/reference-options.json) contains all 154
+[config/reference-options.json](../config/reference-options.json) contains all 165
 approved option IDs, exact display labels, sort order and active flags across 52
 lists. These are model configuration, not extracts of source people. The migration
 creates the table but inserts no options or source rows. The local dummy seed uses
@@ -230,3 +230,15 @@ full Supabase stack, PostgREST or hosted security advisors. No claim is made tha
 an unapplied schema has passed hosted advisors or API integration tests. The
 actual worker's allowed-project read-only query passed during Stage 1; Stage 3
 only made read-only hosted checks. See [handover.md](handover.md) for known issues.
+
+
+## 2026-11-14 — Approved regenerated synthetic v2
+
+The active manifest is source-audit-v2.json (90,319 rows); the original
+source-audit.json remains dated history. Demo rating upper bounds are widened
+to 5, preserving SMART minimum 1 and Functional/Hospitality minimum 0. Real
+client scales remain to be confirmed. Only Monthly Target.month accepts exact
+YYYY-MM text and maps it to the first day; raw text stays in lineage. No other
+date parser is broadened. Retain all 471/61/328 approved warnings and all 11
+new Reference List options. Clinical interpretation of IQ/height/weight remains
+an open sensitivity question; values are loaded as supplied.

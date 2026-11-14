@@ -57,6 +57,19 @@ class LoadTests(unittest.TestCase):
         with self.journal.exclusive():return self.journal.read()
     def loader(self, a=None, worker=None):
         return L.Loader(a or approval(self.rows),worker or self.worker,lambda *x:(self.failures.append(x) or True),self.journal)
+    def test_month_text_conversion_preserves_raw_lineage(self):
+        original=fixture();headers=L.TABS['5.Monthly Target']['source_headers']
+        cells=[{'userEnteredValue':v} for v in original['raw']]
+        index=next(i for i,h in enumerate(headers) if h.split(' (')[0]=='month')
+        for month in ('2024-02','2026-12','2000-01'):
+            cells[index]={'userEnteredValue':{'stringValue':month}}
+            row=L.transform('5.Monthly Target',3,cells,headers)
+            self.assertEqual(row['record']['month'],month+'-01')
+            self.assertEqual(row['raw'][index],{'stringValue':month})
+        for month in ('2026-00','2026-13','2026-1','2026-01-01',' 2026-01','0000-01'):
+            cells[index]={'userEnteredValue':{'stringValue':month}}
+            with self.assertRaises(L.StopLoad):L.transform('5.Monthly Target',3,cells,headers)
+
     def test_default_approval_denies(self):
         with self.assertRaisesRegex(L.StopLoad,'NOT_APPROVED'):self.loader(approval(self.rows,False)).load(self.rows,self.rows)
         self.assertFalse(self.worker.sql)
@@ -184,8 +197,8 @@ class LoadTests(unittest.TestCase):
         loader=L.Loader(approval(self.rows),FakeWorker('timeout'),lambda *x:False,self.journal)
         with self.assertRaisesRegex(L.StopLoad,'FAILURE_LOG_FAILED'):loader.load(self.rows,self.rows)
     def test_warning_manifest_counts(self):
-        self.assertEqual(len(L.AUDIT['approved_warning_rows']['weekly_check_first_held_rule']['rows']),61)
-        self.assertIn('mou_signed_missing_date',L.warnings_for('4.Partner Organisation',5))
+        self.assertEqual(len(L.AUDIT['approved_warning_rows']['weekly_check_first_held_rule']['rows']),471)
+        self.assertIn('non_delivered_with_actual_date',L.warnings_for('16.Batch Schedule',31))
     def test_missing_state_requires_explicit_readonly_reconciliation(self):
         self.journal.path.unlink()
         with self.assertRaisesRegex(L.StopLoad,'RECONCILIATION_REQUIRED'):self.loader().load(self.rows,self.rows)
