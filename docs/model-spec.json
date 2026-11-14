@@ -6,7 +6,7 @@
     {
       "name": "mobilisation_lead",
       "source_tab": "1.Mobilisation Lead",
-      "source_sheet_id": 17040536,
+      "source_sheet_id": 818435001,
       "source_count": 280,
       "fields": [
         {"name": "candidate_id", "type": "text", "primary_key": true, "nullable": false},
@@ -38,8 +38,8 @@
     {
       "name": "lead_follow_up",
       "source_tab": "2.Lead Follow-up",
-      "source_sheet_id": 100018,
-      "source_count": 560,
+      "source_sheet_id": 1061261165,
+      "source_count": 810,
       "fields": [
         {"name": "followup_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "lead_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "mobilisation_lead", "column": "candidate_id"}},
@@ -65,7 +65,7 @@
     {
       "name": "mobilisation_activity",
       "source_tab": "3.Mobilisation Activity",
-      "source_sheet_id": 100019,
+      "source_sheet_id": 778006891,
       "source_count": 810,
       "fields": [
         {"name": "activity_id", "type": "text", "primary_key": true, "nullable": false},
@@ -98,7 +98,7 @@
     {
       "name": "partner_organisation",
       "source_tab": "4.Partner Organisation",
-      "source_sheet_id": 100022,
+      "source_sheet_id": 1348385124,
       "source_count": 12,
       "fields": [
         {"name": "partner_organisation_id", "type": "text", "primary_key": true, "nullable": false},
@@ -120,7 +120,7 @@
     {
       "name": "monthly_target",
       "source_tab": "5.Monthly Target",
-      "source_sheet_id": 100020,
+      "source_sheet_id": 878500381,
       "source_count": 162,
       "fields": [
         {"name": "target_id", "type": "text", "primary_key": true, "nullable": false},
@@ -140,7 +140,7 @@
     {
       "name": "report_meeting_log",
       "source_tab": "6.Report & Meeting Log",
-      "source_sheet_id": 100021,
+      "source_sheet_id": 1059486031,
       "source_count": 216,
       "fields": [
         {"name": "log_id", "type": "text", "primary_key": true, "nullable": false},
@@ -166,7 +166,7 @@
     {
       "name": "learner_profile",
       "source_tab": "7.Learner Profile",
-      "source_sheet_id": 2140882457,
+      "source_sheet_id": 1220585274,
       "source_count": 215,
       "fields": [
         {"name": "learner_id", "type": "text", "primary_key": true, "nullable": false},
@@ -204,7 +204,7 @@
     {
       "name": "family_contact",
       "source_tab": "8.Family Contact",
-      "source_sheet_id": 1276454369,
+      "source_sheet_id": 1083876260,
       "source_count": 286,
       "fields": [
         {"name": "contact_id", "type": "text", "primary_key": true, "nullable": false},
@@ -227,7 +227,7 @@
     {
       "name": "learner_sensitive_details",
       "source_tab": "9.Learner Sensitive Details",
-      "source_sheet_id": 1244590917,
+      "source_sheet_id": 1055257635,
       "source_count": 215,
       "fields": [
         {"name": "learner_id", "type": "text", "primary_key": true, "nullable": false, "foreign_key_hint": true, "references": {"table": "learner_profile", "column": "learner_id"}},
@@ -250,7 +250,7 @@
     {
       "name": "batch",
       "source_tab": "10.Batch",
-      "source_sheet_id": 657762937,
+      "source_sheet_id": 1673109098,
       "source_count": 20,
       "fields": [
         {"name": "batch_id", "type": "text", "primary_key": true, "nullable": false},
@@ -281,7 +281,7 @@
     {
       "name": "enrolment",
       "source_tab": "11.Enrolment",
-      "source_sheet_id": 947147489,
+      "source_sheet_id": 23478355,
       "source_count": 220,
       "fields": [
         {"name": "enrolment_id", "type": "text", "primary_key": true, "nullable": false},
@@ -327,7 +327,7 @@
     {
       "name": "fee_instalment",
       "source_tab": "12.Fee Instalment",
-      "source_sheet_id": 1174331862,
+      "source_sheet_id": 1063409496,
       "source_count": 660,
       "fields": [
         {"name": "instalment_id", "type": "text", "primary_key": true, "nullable": false},
@@ -347,7 +347,7 @@
     {
       "name": "fee_payment",
       "source_tab": "13.Fee Payment",
-      "source_sheet_id": 100017,
+      "source_sheet_id": 1610452135,
       "source_count": 597,
       "fields": [
         {"name": "payment_id", "type": "text", "primary_key": true, "nullable": false},
@@ -370,7 +370,7 @@
     {
       "name": "master_programme_schedule",
       "source_tab": "14.Master Programme Schedule",
-      "source_sheet_id": 100023,
+      "source_sheet_id": 1740938502,
       "source_count": 120,
       "fields": [
         {"name": "master_programme_schedule_id", "type": "text", "primary_key": true, "nullable": false},
@@ -397,7 +397,7 @@
     {
       "name": "standard_topic",
       "source_tab": "15.Standard Topic",
-      "source_sheet_id": 100024,
+      "source_sheet_id": 769469502,
       "source_count": 50,
       "fields": [
         {"name": "topic_id", "type": "text", "primary_key": true, "nullable": false},
@@ -419,7 +419,7 @@
     {
       "name": "batch_schedule",
       "source_tab": "16.Batch Schedule",
-      "source_sheet_id": 273907544,
+      "source_sheet_id": 272459319,
       "source_count": 1320,
       "fields": [
         {"name": "batch_schedule_id", "type": "text", "primary_key": true, "nullable": false},
@@ -452,8 +452,8 @@
     {
       "name": "learner_session_log",
       "source_tab": "17.Learner Session Log",
-      "source_sheet_id": 2125664271,
-      "source_count": 1620,
+      "source_sheet_id": 192995706,
+      "source_count": 12139,
       "fields": [
         {"name": "learner_session_log_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "enrolment_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "enrolment", "column": "enrolment_id"}},
@@ -476,8 +476,8 @@
     {
       "name": "goal",
       "source_tab": "18.Goal",
-      "source_sheet_id": 1321044428,
-      "source_count": 0,
+      "source_sheet_id": 950873313,
+      "source_count": 879,
       "fields": [
         {"name": "goal_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "enrolment_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "enrolment", "column": "enrolment_id"}},
@@ -509,8 +509,8 @@
     {
       "name": "goal_review",
       "source_tab": "19.Goal Review",
-      "source_sheet_id": 1566744767,
-      "source_count": 0,
+      "source_sheet_id": 645498137,
+      "source_count": 4455,
       "fields": [
         {"name": "goal_review_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "goal_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "goal", "column": "goal_id"}},
@@ -544,8 +544,8 @@
     {
       "name": "assessment_event",
       "source_tab": "20.Assessment Event",
-      "source_sheet_id": 1090002002,
-      "source_count": 0,
+      "source_sheet_id": 802106583,
+      "source_count": 1853,
       "fields": [
         {"name": "assessment_event_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "enrolment_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "enrolment", "column": "enrolment_id"}},
@@ -585,7 +585,7 @@
     {
       "name": "criterion_catalogue",
       "source_tab": "21.Criterion Catalogue",
-      "source_sheet_id": 1135614271,
+      "source_sheet_id": 458886262,
       "source_count": 210,
       "fields": [
         {"name": "criterion_id", "type": "text", "primary_key": true, "nullable": false},
@@ -611,8 +611,8 @@
     {
       "name": "criterion_score",
       "source_tab": "22.Criterion Score",
-      "source_sheet_id": 567119627,
-      "source_count": 0,
+      "source_sheet_id": 159050399,
+      "source_count": 64855,
       "fields": [
         {"name": "criterion_score_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "assessment_event_id", "type": "text", "primary_key": false, "nullable": false, "foreign_key_hint": true, "references": {"table": "assessment_event", "column": "assessment_event_id"}},
@@ -634,7 +634,7 @@
     {
       "name": "staff",
       "source_tab": "23.Staff",
-      "source_sheet_id": 288493046,
+      "source_sheet_id": 94858585,
       "source_count": 20,
       "fields": [
         {"name": "staff_id", "type": "text", "primary_key": true, "nullable": false},
@@ -655,8 +655,8 @@
     {
       "name": "reference_list",
       "source_tab": "24.Reference List",
-      "source_sheet_id": 1382017837,
-      "source_count": 154,
+      "source_sheet_id": 1822822605,
+      "source_count": 165,
       "fields": [
         {"name": "reference_value_id", "type": "text", "primary_key": true, "nullable": false},
         {"name": "list_name", "type": "text", "primary_key": false, "nullable": false},
@@ -685,5 +685,21 @@
     {"table": "criterion_score", "columns": ["assessment_event_id", "context_assessment_type_id", "context_rubric_version"], "references": {"table": "assessment_event", "columns": ["assessment_event_id", "assessment_type_id", "rubric_version"]}},
     {"table": "criterion_score", "columns": ["criterion_id", "context_assessment_type_id", "context_rubric_version", "context_score_ceiling"], "references": {"table": "criterion_catalogue", "columns": ["criterion_id", "assessment_type_id", "rubric_version", "context_score_ceiling"]}},
     {"table": "goal_review", "columns": ["goal_id", "context_section_key"], "references": {"table": "goal", "columns": ["goal_id", "context_section_key"]}}
-  ]
+  ],
+  "goal_review_scales": {
+    "goal_section.SMART_GOALS": {
+      "minimum": 1,
+      "maximum": 5
+    },
+    "goal_section.FUNCTIONAL_LEARNING": {
+      "minimum": 0,
+      "maximum": 5
+    },
+    "goal_section.HOSPITALITY": {
+      "minimum": 0,
+      "maximum": 5
+    }
+  },
+  "monthly_target_month_conversion": "YYYY-MM -> YYYY-MM-01; original text retained in raw lineage",
+  "active_source_version": "regenerated-synthetic-v2-20261114"
 }

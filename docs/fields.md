@@ -470,8 +470,8 @@ Source: `19.Goal Review`; 0 rows at inspection.
 | `next_steps` | `text` | yes |  |
 | `ideal_seed_pathway` | `text` | yes | FK → reference_list.reference_value_id; list: seed_pathway |
 | `ffm_ffi_date` | `date` | yes |  |
-| `faculty_rating_score` | `numeric` | yes |  |
-| `family_rating_score` | `numeric` | yes |  |
+| `faculty_rating_score` | `numeric` | yes | SMART 1–5; Functional/Hospitality 0–5; other sections unchanged |
+| `family_rating_score` | `numeric` | yes | SMART 1–5; Functional/Hospitality 0–5; other sections unchanged |
 | `ideal_seed_pathway_other` | `text` | yes |  |
 | `created_at` | `timestamptz` | yes |  |
 | `updated_at` | `timestamptz` | yes |  |
@@ -602,3 +602,9 @@ These columns mirror parent context. Do not map source values into them; trigger
 | `ids_import.source_row` | `chunk_first_row integer`, `chunk_last_row integer` | Filled from chunk; null iff unchunked; composite FK and range CHECK bind the scope |
 
 All new domain context columns are NOT NULL; attendance_reference_id alone remains nullable when the raw attendance mark is null. Source-row chunk bounds are nullable only for unchunked staging. Original source fields, values and nullability are unchanged.
+
+
+2026-11-14: Monthly Target.month remains date/first-of-month. For v2, exact
+YYYY-MM source text deterministically maps to YYYY-MM-01, preserving raw text
+in lineage. Active Reference List has 165 options; earlier counts above are
+historical. New source row counts/gids are in source-audit-v2.json.

@@ -607,3 +607,41 @@ must follow explicit read-only reconciliation rather than blind replay.
 
 Documentation publication: two shell tool invocations for preparation/switch and
 commit/push, plus one GitHub PR-metadata update; elapsed time unmeasured.
+
+
+## 2026-11-14 — Regenerated synthetic v2: approved implementation
+
+Active workbook manifest: `source-audit-v2.json`, version
+`regenerated-synthetic-v2-20261114`, 90,319 records across 24 data tabs; Model
+Guide is documentation. Earlier source/count/load sections remain historical.
+The regenerated workbook populates Goal, Goal Review, Assessment Event and
+Criterion Score, expands Learner Session Log to 12,139 records, and adds 11
+Reference List options (165 total).
+
+The additive migration `20261114102844_align_goal_review_scales.sql` replaces
+only `ids.goal_review.goal_review_check`: SMART becomes 1–5; Functional Learning
+and Hospitality become 0–5. Lower limits, nullable scores and other sections
+are unchanged. The demo scale was widened to match this dataset; the real
+client scale is to be confirmed. Applied migrations are not edited.
+
+Monthly Target keeps its date column. Exact YYYY-MM source text becomes
+YYYY-MM-01 deterministically; original text remains in source-row raw lineage.
+All 471 weekly-check placement warnings, 61 non-delivered sessions with actual
+dates and 328 Holiday/Cancelled logs are retained, not quarantined. No extra
+reference options are inferred. IQ, height and weight remain as supplied; their
+necessity, meaning, units and access remain an open sensitivity question.
+
+This load uses synthetic data. Source values appear in SQL statement text and
+could reach database or request logs. Before real client data is loaded, use a
+parameterised route with database/request/parameter/error log controls verified.
+No transport change or server-log privacy guarantee is claimed here.
+
+Local validation after fixing the synthetic Reference List fixture: 56/56
+loader tests passed in 24.105 seconds, including real PostgreSQL 17.11 scale
+boundaries (both score fields, retained lower limits, 5 valid, 5.01/6 invalid),
+month conversion/raw lineage, atomic rollback, replay, concurrency and lost
+response recovery. `python scripts/validate_local.py` also passed: all three
+migrations, schema contract, RLS/grants, 186 FKs and five concurrency checks.
+Only invented fixtures were seeded into a disposable, network-isolated local
+container. Hosted migration/load/security verification is pending. Setup and
+separate schema-validator elapsed time were unmeasured; no credits inferred.

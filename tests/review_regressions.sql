@@ -72,7 +72,7 @@ set constraints all deferred;
 update ids.goal set goal_section_id='goal_section.FUNCTIONAL_LEARNING' where goal_id='DUMMY-G1';
 update ids.goal_review set goal_id=goal_id where goal_review_id='DUMMY-GR1';
 set constraints all immediate;
-select pg_temp.expect_failure($q$update ids.goal_review set faculty_rating_score=4 where goal_review_id='DUMMY-GR1'$q$, '23514');
+select pg_temp.expect_failure($q$update ids.goal_review set faculty_rating_score=6 where goal_review_id='DUMMY-GR1'$q$, '23514');
 
 -- There must be no nonunique index exactly duplicating a unique/primary key.
 select pg_temp.assert_true(not exists (
