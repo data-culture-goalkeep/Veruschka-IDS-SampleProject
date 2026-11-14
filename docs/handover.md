@@ -618,7 +618,7 @@ The regenerated workbook populates Goal, Goal Review, Assessment Event and
 Criterion Score, expands Learner Session Log to 12,139 records, and adds 11
 Reference List options (165 total).
 
-The additive migration `20261114102844_align_goal_review_scales.sql` replaces
+The additive migration `20261114104958_align_goal_review_scales.sql` replaces
 only `ids.goal_review.goal_review_check`: SMART becomes 1–5; Functional Learning
 and Hospitality become 0–5. Lower limits, nullable scores and other sections
 are unchanged. The demo scale was widened to match this dataset; the real
@@ -657,3 +657,9 @@ immutable snapshots, durable attempt journal and no-retry controls remain intact
 No source person rows, tokens or private snapshots are tracked. All 56 loader
 tests passed again in 25.760 seconds. This is a self-review, not an independent
 external review or a guarantee about server-side logging.
+
+2026-11-14: standard worker migration endpoint recorded version `20261114104958`.
+Renamed `20261114102844_align_goal_review_scales.sql` with git mv to
+`20261114104958_align_goal_review_scales.sql`; SQL SHA-256 is byte-identical
+(`e5b4ede04173629a4b9167787152abc893404ca224e340aed86f5a501df5ae6e`).
+Updated active manifest required migration and documentation references.
