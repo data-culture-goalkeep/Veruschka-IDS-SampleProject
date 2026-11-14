@@ -69,6 +69,10 @@ class LoadTests(unittest.TestCase):
         for month in ('2026-00','2026-13','2026-1','2026-01-01',' 2026-01','0000-01'):
             cells[index]={'userEnteredValue':{'stringValue':month}}
             with self.assertRaises(L.StopLoad):L.transform('5.Monthly Target',3,cells,headers)
+        for value in ({'stringValue':'2026-11','formulaValue':'=TODAY()'},
+                      {'stringValue':'2026-11','numberValue':1}, {}):
+            cells[index]={'userEnteredValue':value}
+            with self.assertRaises(L.StopLoad):L.transform('5.Monthly Target',3,cells,headers)
 
     def test_default_approval_denies(self):
         with self.assertRaisesRegex(L.StopLoad,'NOT_APPROVED'):self.loader(approval(self.rows,False)).load(self.rows,self.rows)

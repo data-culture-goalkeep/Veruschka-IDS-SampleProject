@@ -464,3 +464,9 @@ migrations, schema contract, RLS/grants, 186 FKs and five concurrency checks.
 Only invented fixtures were seeded into a disposable, network-isolated local
 container. Hosted migration/load/security verification is pending. Setup and
 separate schema-validator elapsed time were unmeasured; no credits inferred.
+
+2026-11-14 self-review: fixed one medium finding in the month conversion path:
+reject formula-bearing and multi-value cell payloads before conversion. No high
+or remaining medium findings in the changed SQL, access controls, scale bounds,
+loader quoting, source manifest or tracked-file review. Regression suite passed
+56/56 again in 25.760 seconds; no hosted writes were used for these tests.

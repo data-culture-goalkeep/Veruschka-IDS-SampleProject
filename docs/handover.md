@@ -645,3 +645,15 @@ migrations, schema contract, RLS/grants, 186 FKs and five concurrency checks.
 Only invented fixtures were seeded into a disposable, network-isolated local
 container. Hosted migration/load/security verification is pending. Setup and
 separate schema-validator elapsed time were unmeasured; no credits inferred.
+
+Self-review (2026-11-14): one medium finding fixed before hosted application:
+Monthly Target's new text conversion now rejects formula and multi-value cell
+payloads, preserving the generic parser's fail-closed checks. Regression cases
+cover malformed, blank, formula-bearing and ambiguous month cells. No high or
+remaining medium findings in the reviewed diff. SQL replaces only the named
+CHECK in a transaction; RLS, ACLs, lower bounds and other sections are untouched.
+The allowlisted worker destination, atomic chunks/lineage/checkpoints, private
+immutable snapshots, durable attempt journal and no-retry controls remain intact.
+No source person rows, tokens or private snapshots are tracked. All 56 loader
+tests passed again in 25.760 seconds. This is a self-review, not an independent
+external review or a guarantee about server-side logging.

@@ -149,6 +149,8 @@ def transform(tab, row, cells, headers):
         if name not in fields: raise StopLoad('HEADER_CHANGED')
         if tab == '5.Monthly Target' and name == 'month':
             value = cell.get('userEnteredValue', {})
+            if 'formulaValue' in value: raise StopLoad('FORMULA_FOUND')
+            if len(value) != 1: raise StopLoad('TYPE_INVALID')
             if 'stringValue' in value:
                 text = value['stringValue']
                 if not re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', text): raise StopLoad('TYPE_INVALID')
